@@ -1,0 +1,56 @@
+[
+  {
+    "book": "57",
+    "page": "21",
+    "metadata": {
+      "document_details": [
+        {
+          "Doc. #": "5721",
+          "File Date": "10/26/1932",
+          "Rec Time": "00:00AM",
+          "Type Desc.": "PLAN",
+          "Book/Page": "00057/21",
+          "Consideration": "",
+          "Doc. Status": "Verified/Certified"
+        }
+      ],
+      "property_info": [
+        {
+          "Street #": "",
+          "Street Name": "CHRISTIAN ST",
+          "Description": ""
+        }
+      ],
+      "grantor_grantee": [
+        {
+          "column_0": "MIDDLESEX CO-OPERATIVE BANK-LOWELL",
+          "column_0_link": "javascript:__doPostBack('DocDetails1$GridView_GrantorGrantee$ctl02$ButtonRow__0','')",
+          "column_1": "Grantor"
+        }
+      ],
+      "details": "Doc. # File Date Rec Time Type Desc. Book/Page Consideration Doc. Status\n5721 10/26/1932 00:00AM PLAN 00057/21   Verified/Certified",
+      "properties": "Street # Street Name Description\n  CHRISTIAN ST",
+      "grantorgrantee": "Grantor/Grantee-1\n  MIDDLESEX CO-OPERATIVE BANK-LOWELL Grantor"
+    },
+    "status": "success"
+  },
+  {
+    "book": "51",
+    "page": "27",
+    "metadata": {
+      "document_details": [
+        {
+          "Doc. #": "5127",
+          "File Date": "01/01/1980",
+          "Rec Time": "00:00AM",
+          "Type Desc.": "PLAN",
+          "Book/Page": "00051/27",
+          "Consideration": "",
+          "Doc. Status": "Verified/Certified"
+        }
+      ],
+      "details": "Doc. # File Date Rec Time Type Desc. Book/Page Consideration Doc. Status\n5127 01/01/1980 00:00AM PLAN 00051/27   Verified/Certified"
+    },
+    "status": "success"
+  }
+]
