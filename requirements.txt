@@ -1,0 +1,27 @@
+# Core dependencies
+pandas>=2.0.0
+numpy>=1.24.0
+
+# Web scraping (Step 3)
+selenium>=4.15.0
+
+# OCR and AI models (Step 2)
+google-cloud-vision>=3.4.0
+transformers>=4.35.0
+torch>=2.0.0
+pillow>=10.0.0
+
+# Gemini API (Step 2)
+google-generativeai>=0.3.0
+
+# Geolocation (Step 4)
+# Note: You may need to install additional packages for StreetClusteringValidator
+# Add them here after reviewing the dependencies
+
+# Utilities
+requests>=2.31.0
+python-dotenv>=1.0.0
+
+# Optional: For better progress tracking
+tqdm>=4.66.0
+

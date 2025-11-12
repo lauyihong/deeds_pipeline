@@ -1,140 +1,140 @@
 # MassLand Records Scraper
 
-自动化爬虫脚本，用于从MassLand Records网站提取土地记录metadata信息。
+Automated scraping script for extracting land record metadata from the MassLand Records website.
 
-## 📋 功能概述
+## 📋 Feature Overview
 
-该脚本能够：
-1. 自动访问MassLand Records网站
-2. 根据Book和Page编号搜索记录
-3. 提取详细的文档metadata信息，包括：
-   - 文档详情（Doc. #, File Date, Rec Time, Type Desc., Book/Page, Consideration, Doc. Status）
-   - 属性信息（Street #, Street Name, Description）
-   - Grantor/Grantee信息
+This script can:
+1. Automatically access the MassLand Records website
+2. Search records by Book and Page numbers
+3. Extract detailed document metadata information, including:
+   - Document details (Doc. #, File Date, Rec Time, Type Desc., Book/Page, Consideration, Doc. Status)
+   - Property information (Street #, Street Name, Description)
+   - Grantor/Grantee information
 
-## 🏗️ 架构设计
+## 🏗️ Architecture Design
 
-### 核心类：`MassLandScraper`
+### Core Class: `MassLandScraper`
 
-脚本采用面向对象设计，主要包含以下组件：
+The script uses object-oriented design with the following main components:
 
 ```
 MassLandScraper
-├── __init__()              # 初始化浏览器驱动
-├── navigate_to_search_page()  # 导航到搜索页面
-├── setup_search_criteria()     # 设置搜索条件（Office和Search Type）
-├── search_by_book_page()      # 执行搜索
-├── check_search_results()     # 检查搜索结果
-├── click_file_and_extract_metadata()  # 点击结果并提取metadata
-├── extract_metadata()        # 提取metadata数据
-├── extract_table_data()      # 从表格中提取结构化数据
-├── process_csv_file()        # 批量处理CSV文件
-├── save_results()            # 保存结果到JSON
-└── close()                   # 关闭浏览器
+├── __init__()              # Initialize browser driver
+├── navigate_to_search_page()  # Navigate to search page
+├── setup_search_criteria()     # Set search criteria (Office and Search Type)
+├── search_by_book_page()      # Execute search
+├── check_search_results()     # Check search results
+├── click_file_and_extract_metadata()  # Click result and extract metadata
+├── extract_metadata()        # Extract metadata data
+├── extract_table_data()      # Extract structured data from tables
+├── process_csv_file()        # Batch process CSV file
+├── save_results()            # Save results to JSON
+└── close()                   # Close browser
 ```
 
-## 🔄 工作流程
+## 🔄 Workflow
 
-### 1. 初始化阶段
+### 1. Initialization Phase
 ```python
 scraper = MassLandScraper(headless=False)
 ```
-- 创建Chrome浏览器实例
-- 配置浏览器选项（窗口大小、用户代理等）
-- 初始化WebDriverWait等待对象
+- Create Chrome browser instance
+- Configure browser options (window size, user agent, etc.)
+- Initialize WebDriverWait object
 
-### 2. 搜索流程
+### 2. Search Process
 
-对于每个Book/Page组合，执行以下步骤：
+For each Book/Page combination, execute the following steps:
 
-#### 步骤1: 导航到搜索页面
+#### Step 1: Navigate to Search Page
 ```
-访问: https://www.masslandrecords.com/MiddlesexNorth/D/Default.aspx
-等待页面加载完成
-```
-
-#### 步骤2: 设置搜索条件
-```
-1. 设置Office下拉菜单 → "Plans"
-2. 设置Search Type下拉菜单 → "Book Search"
-3. 等待Ajax更新完成
+Visit: https://www.masslandrecords.com/MiddlesexNorth/D/Default.aspx
+Wait for page to load
 ```
 
-#### 步骤3: 输入搜索参数
+#### Step 2: Set Search Criteria
 ```
-1. 在Book输入框中输入Book编号
-2. 在Page输入框中输入Page编号
-3. 点击"Search"按钮
-```
-
-#### 步骤4: 等待搜索结果
-```
-等待DocList1_GridView_Document表格出现
-验证搜索结果已加载
+1. Set Office dropdown → "Plans"
+2. Set Search Type dropdown → "Book Search"
+3. Wait for Ajax update to complete
 ```
 
-#### 步骤5: 检查搜索结果
+#### Step 3: Enter Search Parameters
 ```
-通过File Date链接定位搜索结果
-统计结果数量
-提取第一条结果的基本信息（用于调试）
-```
-
-#### 步骤6: 点击File Date链接
-```
-定位File Date链接（使用多种选择器策略）
-使用JavaScript点击（避免StaleElementReferenceException）
-等待DocDetails区域加载
+1. Enter Book number in Book input field
+2. Enter Page number in Page input field
+3. Click "Search" button
 ```
 
-#### 步骤7: 提取Metadata
+#### Step 4: Wait for Search Results
 ```
-提取三个主要表格：
-1. DocDetails1_GridView_Details - 文档详情
-2. DocDetails1_GridView_Property - 属性信息
-3. DocDetails1_GridView_GrantorGrantee - Grantor/Grantee信息
+Wait for DocList1_GridView_Document table to appear
+Verify search results are loaded
 ```
 
-### 3. 数据提取逻辑
+#### Step 5: Check Search Results
+```
+Locate search results via File Date link
+Count number of results
+Extract basic information from first result (for debugging)
+```
 
-#### `extract_table_data()` 方法
-- 从表格中提取表头作为字典的key
-- 遍历数据行，将每行转换为字典
-- 处理包含链接的单元格，提取链接文本和href
-- 返回字典列表格式
+#### Step 6: Click File Date Link
+```
+Locate File Date link (using multiple selector strategies)
+Use JavaScript click (to avoid StaleElementReferenceException)
+Wait for DocDetails area to load
+```
 
-#### `extract_metadata()` 方法
-- 按顺序提取三个主要表格
-- 提取其他DocDetails区域的内容作为备用
-- 返回包含所有metadata的字典
+#### Step 7: Extract Metadata
+```
+Extract three main tables:
+1. DocDetails1_GridView_Details - Document details
+2. DocDetails1_GridView_Property - Property information
+3. DocDetails1_GridView_GrantorGrantee - Grantor/Grantee information
+```
 
-## 📁 文件结构
+### 3. Data Extraction Logic
+
+#### `extract_table_data()` Method
+- Extract table headers as dictionary keys
+- Iterate through data rows, converting each row to a dictionary
+- Process cells containing links, extracting link text and href
+- Return list of dictionaries format
+
+#### `extract_metadata()` Method
+- Extract three main tables in sequence
+- Extract other DocDetails area content as backup
+- Return dictionary containing all metadata
+
+## 📁 File Structure
 
 ```
 test_scrap/
-├── massland_scraper.py      # 主脚本
-├── massland_input.csv        # 输入文件（Book, Page）
-├── massland_output.json      # 输出文件（提取的metadata）
-├── requirements.txt          # Python依赖
-└── README.md                 # 本文件
+├── massland_scraper.py      # Main script
+├── massland_input.csv        # Input file (Book, Page)
+├── massland_output.json      # Output file (extracted metadata)
+├── requirements.txt          # Python dependencies
+└── README.md                 # This file
 ```
 
-## 📥 输入格式
+## 📥 Input Format
 
-### CSV文件格式 (`massland_input.csv`)
+### CSV File Format (`massland_input.csv`)
 ```csv
 book,page
 57,21
 51,27
 ```
 
-**字段说明：**
-- `book`: 书籍编号（整数或字符串）
-- `page`: 页码（整数或字符串）
+**Field Description:**
+- `book`: Book number (integer or string)
+- `page`: Page number (integer or string)
 
-## 📤 输出格式
+## 📤 Output Format
 
-### JSON文件格式 (`massland_output.json`)
+### JSON File Format (`massland_output.json`)
 ```json
 [
   {
@@ -172,48 +172,48 @@ book,page
 ]
 ```
 
-**字段说明：**
-- `book`: 输入的Book编号
-- `page`: 输入的Page编号
-- `metadata`: 提取的metadata字典
-  - `document_details`: 文档详情列表
-  - `property_info`: 属性信息列表
-  - `grantor_grantee`: Grantor/Grantee信息列表
-- `status`: 处理状态（"success" 或 "failed"）
+**Field Description:**
+- `book`: Input Book number
+- `page`: Input Page number
+- `metadata`: Extracted metadata dictionary
+  - `document_details`: Document details list
+  - `property_info`: Property information list
+  - `grantor_grantee`: Grantor/Grantee information list
+- `status`: Processing status ("success" or "failed")
 
-## 🚀 使用方法
+## 🚀 Usage
 
-### 基本使用
+### Basic Usage
 
 ```python
 from massland_scraper import MassLandScraper
 
-# 创建scraper实例
+# Create scraper instance
 scraper = MassLandScraper(headless=False)
 
-# 处理CSV文件
+# Process CSV file
 results = scraper.process_csv_file("massland_input.csv")
 
-# 保存结果
+# Save results
 scraper.save_results(results, "massland_output.json")
 
-# 关闭浏览器
+# Close browser
 scraper.close()
 ```
 
-### 命令行使用
+### Command Line Usage
 
 ```bash
-# 安装依赖
+# Install dependencies
 pip install -r requirements.txt
 
-# 运行脚本
+# Run script
 python massland_scraper.py
 ```
 
-### 集成到Pipeline
+### Pipeline Integration
 
-#### 方式1: 作为模块导入
+#### Method 1: Import as Module
 
 ```python
 from massland_scraper import MassLandScraper
@@ -221,25 +221,25 @@ import pandas as pd
 
 def process_land_records(book_page_list):
     """
-    处理土地记录列表
+    Process land records list
     
     Args:
         book_page_list: [(book1, page1), (book2, page2), ...]
     
     Returns:
-        list: 包含metadata的结果列表
+        list: Result list containing metadata
     """
-    scraper = MassLandScraper(headless=True)  # 后台运行
+    scraper = MassLandScraper(headless=True)  # Run in background
     results = []
     
     try:
         for book, page in book_page_list:
-            # 导航到搜索页面
+            # Navigate to search page
             scraper.navigate_to_search_page()
             
-            # 执行搜索
+            # Execute search
             if scraper.search_by_book_page(book, page):
-                # 提取metadata
+                # Extract metadata
                 metadata = scraper.click_file_and_extract_metadata()
                 results.append({
                     'book': book,
@@ -252,12 +252,12 @@ def process_land_records(book_page_list):
     
     return results
 
-# 使用示例
+# Usage example
 book_pages = [(57, 21), (51, 27)]
 results = process_land_records(book_pages)
 ```
 
-#### 方式2: 批量处理DataFrame
+#### Method 2: Batch Process DataFrame
 
 ```python
 import pandas as pd
@@ -265,13 +265,13 @@ from massland_scraper import MassLandScraper
 
 def process_dataframe(df):
     """
-    处理包含Book和Page列的DataFrame
+    Process DataFrame containing Book and Page columns
     
     Args:
-        df: pandas DataFrame，包含'book'和'page'列
+        df: pandas DataFrame with 'book' and 'page' columns
     
     Returns:
-        DataFrame: 添加了metadata列的新DataFrame
+        DataFrame: New DataFrame with added metadata column
     """
     scraper = MassLandScraper(headless=True)
     results = []
@@ -294,14 +294,14 @@ def process_dataframe(df):
     return df
 ```
 
-#### 方式3: 异步处理（适合大批量数据）
+#### Method 3: Asynchronous Processing (for large batches)
 
 ```python
 from concurrent.futures import ThreadPoolExecutor
 from massland_scraper import MassLandScraper
 
 def process_single_record(book, page):
-    """处理单个记录"""
+    """Process single record"""
     scraper = MassLandScraper(headless=True)
     try:
         scraper.navigate_to_search_page()
@@ -318,7 +318,7 @@ def process_single_record(book, page):
         scraper.close()
 
 def process_batch(book_page_list, max_workers=3):
-    """批量处理（使用线程池）"""
+    """Batch processing (using thread pool)"""
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         results = list(executor.map(
             lambda x: process_single_record(x[0], x[1]),
@@ -327,106 +327,105 @@ def process_batch(book_page_list, max_workers=3):
     return results
 ```
 
-## ⚙️ 配置选项
+## ⚙️ Configuration Options
 
-### 初始化参数
+### Initialization Parameters
 
 ```python
 MassLandScraper(headless=False)
 ```
 
 - `headless` (bool): 
-  - `False`: 显示浏览器窗口（便于调试）
-  - `True`: 后台运行（适合生产环境）
+  - `False`: Show browser window (useful for debugging)
+  - `True`: Run in background (suitable for production)
 
-### 自定义等待时间
+### Custom Wait Times
 
-在脚本中修改以下常量：
+Modify the following constants in the script:
 ```python
-self.wait = WebDriverWait(self.driver, 20)  # 默认20秒超时
-time.sleep(2)  # 各种等待时间
+self.wait = WebDriverWait(self.driver, 20)  # Default 20 second timeout
+time.sleep(2)  # Various wait times
 ```
 
-## 🔧 错误处理
+## 🔧 Error Handling
 
-脚本包含多层错误处理机制：
+The script includes multi-layer error handling mechanisms:
 
-1. **重试机制**: 每个记录最多重试3次
-2. **浏览器恢复**: 如果浏览器连接丢失，自动重新初始化
-3. **多种选择器策略**: 使用多种方法定位元素，提高成功率
-4. **JavaScript点击**: 避免StaleElementReferenceException
+1. **Retry Mechanism**: Up to 3 retry attempts per record
+2. **Browser Recovery**: Automatically reinitialize if browser connection is lost
+3. **Multiple Selector Strategies**: Use multiple methods to locate elements, improving success rate
+4. **JavaScript Click**: Avoid StaleElementReferenceException
 
-### 常见错误及解决方案
+### Common Errors and Solutions
 
-| 错误 | 原因 | 解决方案 |
+| Error | Cause | Solution |
 |------|------|----------|
-| `StaleElementReferenceException` | 元素已过期 | 使用JavaScript点击或重新查找元素 |
-| `TimeoutException` | 页面加载超时 | 增加等待时间或检查网络连接 |
-| `NoSuchElementException` | 找不到元素 | 检查页面结构是否变化 |
+| `StaleElementReferenceException` | Element has expired | Use JavaScript click or re-find element |
+| `TimeoutException` | Page load timeout | Increase wait time or check network connection |
+| `NoSuchElementException` | Element not found | Check if page structure has changed |
 
-## 📊 性能优化建议
+## 📊 Performance Optimization Suggestions
 
-1. **批量处理**: 对于大量数据，考虑使用异步处理
-2. **缓存机制**: 避免重复搜索相同Book/Page
-3. **延迟设置**: 在请求之间添加适当延迟，避免被封IP
-4. **资源管理**: 确保在finally块中关闭浏览器
+1. **Batch Processing**: Consider using asynchronous processing for large amounts of data
+2. **Caching Mechanism**: Avoid repeatedly searching the same Book/Page
+3. **Delay Settings**: Add appropriate delays between requests to avoid IP blocking
+4. **Resource Management**: Ensure browser is closed in finally block
 
-## 🔍 调试技巧
+## 🔍 Debugging Tips
 
-### 启用详细日志
-脚本已包含详细的print语句，显示每个步骤的执行状态。
+### Enable Verbose Logging
+The script already includes detailed print statements showing the execution status of each step.
 
-### 使用headless=False模式
+### Use headless=False Mode
 ```python
 scraper = MassLandScraper(headless=False)
 ```
-这样可以观察浏览器的实际行为，便于调试。
+This allows you to observe the actual browser behavior, making debugging easier.
 
-### 保存中间状态
+### Save Intermediate State
 ```python
-# 在搜索后保存页面截图
+# Save page screenshot after search
 scraper.driver.save_screenshot(f"search_{book}_{page}.png")
 
-# 保存页面HTML
+# Save page HTML
 with open(f"page_{book}_{page}.html", "w") as f:
     f.write(scraper.driver.page_source)
 ```
 
-## 📝 依赖要求
+## 📝 Dependencies
 
 ```
 selenium>=4.15.0
 ```
 
-确保已安装Chrome浏览器和ChromeDriver（Selenium 4.6+会自动管理）。
+Ensure Chrome browser and ChromeDriver are installed (Selenium 4.6+ will automatically manage this).
 
-## 🎯 关键设计决策
+## 🎯 Key Design Decisions
 
-1. **使用Selenium**: 因为网站使用Ajax动态加载，需要真实浏览器环境
-2. **JavaScript点击**: 避免StaleElementReferenceException问题
-3. **多种选择器策略**: 提高元素定位的成功率
-4. **结构化数据提取**: 将表格数据转换为字典格式，便于后续处理
+1. **Using Selenium**: Required because the website uses Ajax dynamic loading, needing a real browser environment
+2. **JavaScript Click**: Avoids StaleElementReferenceException issues
+3. **Multiple Selector Strategies**: Improves element location success rate
+4. **Structured Data Extraction**: Converts table data to dictionary format for easier downstream processing
 
-## 🔄 Pipeline集成检查清单
+## 🔄 Pipeline Integration Checklist
 
-- [ ] 确保Chrome浏览器已安装
-- [ ] 安装Python依赖: `pip install -r requirements.txt`
-- [ ] 准备输入CSV文件（包含book和page列）
-- [ ] 根据需要调整等待时间和重试次数
-- [ ] 在生产环境中使用`headless=True`
-- [ ] 实现错误处理和日志记录
-- [ ] 设置适当的延迟以避免被封IP
-- [ ] 处理输出JSON数据并集成到下游系统
+- [ ] Ensure Chrome browser is installed
+- [ ] Install Python dependencies: `pip install -r requirements.txt`
+- [ ] Prepare input CSV file (containing book and page columns)
+- [ ] Adjust wait times and retry counts as needed
+- [ ] Use `headless=True` in production environment
+- [ ] Implement error handling and logging
+- [ ] Set appropriate delays to avoid IP blocking
+- [ ] Process output JSON data and integrate into downstream systems
 
-## 📞 支持
+## 📞 Support
 
-如遇问题，检查：
-1. Chrome浏览器版本是否兼容
-2. 网络连接是否正常
-3. 网站结构是否有变化
-4. 查看详细错误日志
+If you encounter issues, check:
+1. Chrome browser version compatibility
+2. Network connection status
+3. Whether website structure has changed
+4. Review detailed error logs
 
-## 📄 许可证
+## 📄 License
 
-本项目仅供学习和研究使用。
-
+This project is for learning and research purposes only.
