@@ -1,0 +1,44 @@
+{
+  "5767": {
+    "deed_id": "5767",
+    "county": "Middlesex County",
+    "town": "Dracut",
+    "extracted_streets": [
+      "HILLCREST RD",
+      "HILLSIDE TERR",
+      "HILLTOP RD",
+      "LAKEVIEW AVE",
+      "LONG POND",
+      "LONG POND DR",
+      "MILLS DR",
+      "OVERLOOK TERR",
+      "SHORE DR",
+      "VALLEY RD",
+      "VARNUM RD"
+    ],
+    "scraper_results": [],
+    "step3_completed": true
+  },
+  "6188": {
+    "deed_id": "6188",
+    "county": "Middlesex County",
+    "town": "Dracut",
+    "extracted_streets": [
+      "BROAD RD",
+      "HILLCREST RD",
+      "HILLSIDE TERR",
+      "HILLTOP RD",
+      "LONG DR",
+      "LONG POND",
+      "LONG POND DR",
+      "MAPLE RD",
+      "MIDWOOD RD",
+      "MILLS DR",
+      "OVERLOOK TERR",
+      "SHORE DR",
+      "VALLEY RD"
+    ],
+    "scraper_results": [],
+    "step3_completed": true
+  }
+}

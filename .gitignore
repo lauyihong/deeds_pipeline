@@ -9,7 +9,7 @@ env/
 ENV/
 
 # Output directories
-output/
+# output/
 cache/
 logs/
 
@@ -28,7 +28,7 @@ logs/
 Thumbs.db
 
 # Data (large files)
-*.json
+# *.json
 !.gitkeep
 
 # Jupyter

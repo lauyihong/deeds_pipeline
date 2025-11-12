@@ -43,7 +43,8 @@ LOG_LEVEL = "INFO"
 LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
 # Chrome driver settings (for step 3)
-CHROME_HEADLESS = True  # Set to False for debugging
+# Allow override via env var: export CHROME_HEADLESS=false to run non-headless
+CHROME_HEADLESS = os.getenv("CHROME_HEADLESS", "true").lower() == "true"  # Default True
 
 # Cache settings
 ENABLE_CACHE = True  # Enable caching to avoid re-processing

@@ -1,0 +1,18 @@
+{
+  "5767": {
+    "deed_id": "5767",
+    "county": "Middlesex County",
+    "town": "Dracut",
+    "book_page_pairs": [
+      {"book": "57", "page": "21"}
+    ]
+  },
+  "6188": {
+    "deed_id": "6188",
+    "county": "Middlesex County",
+    "town": "Dracut",
+    "book_page_pairs": [
+      {"book": "51", "page": "27"}
+    ]
+  }
+}

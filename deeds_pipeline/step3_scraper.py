@@ -41,13 +41,26 @@ class MassLandScraper:
         chrome_options = Options()
         if headless:
             chrome_options.add_argument("--headless=new")
+        # Stealth/robustness options
         chrome_options.add_argument("--disable-dev-shm-usage")
         chrome_options.add_argument("--window-size=1920,1080")
+        chrome_options.add_argument("--no-sandbox")
+        chrome_options.add_argument("--disable-gpu")
+        chrome_options.add_argument("--disable-blink-features=AutomationControlled")
+        chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
+        chrome_options.add_experimental_option("useAutomationExtension", False)
         chrome_options.add_argument(
             "user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         )
         self.driver = webdriver.Chrome(options=chrome_options)
-        self.wait = WebDriverWait(self.driver, 20)
+        # Remove navigator.webdriver flag
+        try:
+            self.driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
+                "source": "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
+            })
+        except Exception:
+            pass
+        self.wait = WebDriverWait(self.driver, 25)
 
     def navigate_to_search_page(self):
         url = "https://www.masslandrecords.com/MiddlesexNorth/D/Default.aspx"
@@ -56,25 +69,52 @@ class MassLandScraper:
         time.sleep(2)
 
     def setup_search_criteria(self):
-        # Office -> Plans
+        # Office -> Plans with multiple fallbacks
         office_select = self.wait.until(
             EC.presence_of_element_located((By.ID, "SearchCriteriaOffice1_DDL_OfficeName"))
         )
-        Select(office_select).select_by_visible_text("Plans")
-        time.sleep(1)
-        # Search Type -> Book Search
+        office_dropdown = Select(office_select)
+        selected = False
+        for val in ("Plans",):
+            try:
+                office_dropdown.select_by_value(val)
+                selected = True
+                break
+            except Exception:
+                pass
+        if not selected:
+            try:
+                office_dropdown.select_by_visible_text("Plans")
+                selected = True
+            except Exception:
+                # Try direct option click
+                for opt in office_dropdown.options:
+                    if "Plans" in opt.text or opt.get_attribute("value") == "Plans":
+                        opt.click()
+                        selected = True
+                        break
+        time.sleep(2)
+        # Search Type -> Book Search with multiple labels
         search_type_select = self.wait.until(
             EC.presence_of_element_located((By.ID, "SearchCriteriaName1_DDL_SearchName"))
         )
-        # Try multiple labels
         dropdown = Select(search_type_select)
+        selected = False
         for label in ("Plans Book Search", "Recorded Land Book Search", "Book Search"):
             try:
                 dropdown.select_by_visible_text(label)
+                selected = True
                 break
             except Exception:
                 continue
-        time.sleep(1)
+        if not selected:
+            # last resort: click option containing 'Book Search'
+            for opt in dropdown.options:
+                if "Book Search" in opt.text:
+                    opt.click()
+                    selected = True
+                    break
+        time.sleep(2)
 
     def search_by_book_page(self, book: str, page: str) -> bool:
         try:
@@ -91,7 +131,11 @@ class MassLandScraper:
             search_btn = self.wait.until(
                 EC.element_to_be_clickable((By.ID, "SearchFormEx1_btnSearch"))
             )
-            search_btn.click()
+            try:
+                search_btn.click()
+            except Exception:
+                # use JS click fallback
+                self.driver.execute_script("arguments[0].click();", search_btn)
             self.wait.until(EC.presence_of_element_located((By.ID, "DocList1_GridView_Document")))
             time.sleep(1)
             return True
