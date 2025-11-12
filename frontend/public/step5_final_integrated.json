@@ -1,0 +1,302 @@
+{
+  "metadata": {
+    "total_deeds": 2,
+    "quality_report": {
+      "total_deeds": 2,
+      "step2_ocr_completed": 0,
+      "step2_completion_rate": "0.0%",
+      "step3_scraper_completed": 2,
+      "step3_completion_rate": "100.0%",
+      "step4_geolocation_completed": 2,
+      "step4_completion_rate": "100.0%",
+      "original_covenant_count": 0,
+      "ocr_detected_covenant_count": 0,
+      "geocoded_count": 2,
+      "geocoded_rate": "100.0%",
+      "with_streets_count": 2,
+      "with_streets_rate": "100.0%"
+    }
+  },
+  "deeds": {
+    "5767": {
+      "deed_id": "5767",
+      "county": "Middlesex County",
+      "extracted_streets": [
+        "HILLCREST RD",
+        "HILLSIDE TERR",
+        "HILLTOP RD",
+        "LAKEVIEW AVE",
+        "LONG POND",
+        "LONG POND DR",
+        "MILLS DR",
+        "OVERLOOK TERR",
+        "SHORE DR",
+        "VALLEY RD",
+        "VARNUM RD"
+      ],
+      "ocr_results": [
+        {
+          "extracted_info": {
+            "city_town": "Dracut"
+          }
+        }
+      ],
+      "step3_completed": true,
+      "geolocation": {
+        "validated_streets": [
+          {
+            "street_name": "HILLCREST RD",
+            "latitude": 42.687534,
+            "longitude": -71.3646421,
+            "address": "Hillcrest Road, Collinsville, Dracut, Middlesex County, Massachusetts, 01854, United States of America",
+            "town": "Collinsville",
+            "candidate_count": 2
+          },
+          {
+            "street_name": "HILLSIDE TERR",
+            "latitude": 42.6858998,
+            "longitude": -71.3670142,
+            "address": "Hillside Terrace, Dracut, Middlesex County, Massachusetts, 01854, United States of America",
+            "town": "Dracut",
+            "candidate_count": 4
+          },
+          {
+            "street_name": "HILLTOP RD",
+            "latitude": 42.6882835,
+            "longitude": -71.36478,
+            "address": "Hilltop Road, Long Pond Park, Dracut, Middlesex County, Massachusetts, 01854, United States of America",
+            "town": "Long Pond Park",
+            "candidate_count": 2
+          },
+          {
+            "street_name": "LAKEVIEW AVE",
+            "latitude": 42.6739091,
+            "longitude": -71.3335099,
+            "address": "Lakeview Avenue, Dracut, Middlesex County, Massachusetts, 01854, United States of America",
+            "town": "Dracut",
+            "candidate_count": 6
+          },
+          {
+            "street_name": "LONG POND",
+            "latitude": 42.6930641,
+            "longitude": -71.3712679,
+            "address": "Long Pond, Long Pond Park, Dracut, Middlesex County, Massachusetts, United States of America",
+            "town": "Long Pond Park",
+            "candidate_count": 1
+          },
+          {
+            "street_name": "LONG POND DR",
+            "latitude": 42.6855058,
+            "longitude": -71.3628842,
+            "address": "Long Pond Drive, Collinsville, Dracut, Middlesex County, Massachusetts, 01854, United States of America",
+            "town": "Collinsville",
+            "candidate_count": 2
+          },
+          {
+            "street_name": "MILLS DR",
+            "latitude": 42.68813,
+            "longitude": -71.3684423,
+            "address": "Mills Drive, Dracut, Middlesex County, Massachusetts, United States of America",
+            "town": "Dracut",
+            "candidate_count": 2
+          },
+          {
+            "street_name": "OVERLOOK TERR",
+            "latitude": 42.6871167,
+            "longitude": -71.364361,
+            "address": "Overlook Terrace, Dracut, Middlesex County, Massachusetts, 01854, United States of America",
+            "town": "Dracut",
+            "candidate_count": 4
+          },
+          {
+            "street_name": "SHORE DR",
+            "latitude": 42.6885012,
+            "longitude": -71.3695208,
+            "address": "Shore Drive, Long Pond Park, Dracut, Middlesex County, Massachusetts, United States of America",
+            "town": "Long Pond Park",
+            "candidate_count": 2
+          },
+          {
+            "street_name": "VALLEY RD",
+            "latitude": 42.6868051,
+            "longitude": -71.3646455,
+            "address": "Valley Road, Dracut, Middlesex County, Massachusetts, 01854, United States of America",
+            "town": "Dracut",
+            "candidate_count": 2
+          },
+          {
+            "street_name": "VARNUM RD",
+            "latitude": 42.6836977,
+            "longitude": -71.3602323,
+            "address": "Varnum Road, Collinsville, Dracut, Middlesex County, Massachusetts, 01854, United States of America",
+            "town": "Collinsville",
+            "candidate_count": 2
+          }
+        ],
+        "invalid_streets": [],
+        "primary_town": "Dracut",
+        "cluster_center_lat": 42.68622245454546,
+        "cluster_center_lon": -71.36284547272727,
+        "final_address": "44, Valley Road, Dracut, Middlesex County, Massachusetts, 01854, United States of America",
+        "cluster_radius_miles": 1.8234852642301855,
+        "confidence": 0.8176514735769814,
+        "geocoding_stats": {
+          "total_streets": 11,
+          "total_candidates": 29,
+          "streets_geocoded": 11,
+          "primary_town": "Dracut",
+          "validated_streets": 11,
+          "invalid_streets": 0,
+          "cluster_radius_miles": 1.8234852642301855
+        }
+      },
+      "step4_completed": true
+    },
+    "6188": {
+      "deed_id": "6188",
+      "county": "Middlesex County",
+      "extracted_streets": [
+        "BROAD RD",
+        "HILLCREST RD",
+        "HILLSIDE TERR",
+        "HILLTOP RD",
+        "LONG DR",
+        "LONG POND",
+        "LONG POND DR",
+        "MAPLE RD",
+        "MIDWOOD RD",
+        "MILLS DR",
+        "OVERLOOK TERR",
+        "SHORE DR",
+        "VALLEY RD"
+      ],
+      "ocr_results": [
+        {
+          "extracted_info": {
+            "city_town": "Dracut"
+          }
+        }
+      ],
+      "step3_completed": true,
+      "geolocation": {
+        "validated_streets": [
+          {
+            "street_name": "BROAD RD",
+            "latitude": 42.685903,
+            "longitude": -71.3608445,
+            "address": "Broad Road, Collinsville, Dracut, Middlesex County, Massachusetts, 01854, United States of America",
+            "town": "Collinsville",
+            "candidate_count": 2
+          },
+          {
+            "street_name": "HILLCREST RD",
+            "latitude": 42.687534,
+            "longitude": -71.3646421,
+            "address": "Hillcrest Road, Collinsville, Dracut, Middlesex County, Massachusetts, 01854, United States of America",
+            "town": "Collinsville",
+            "candidate_count": 2
+          },
+          {
+            "street_name": "HILLSIDE TERR",
+            "latitude": 42.6878229,
+            "longitude": -71.3665188,
+            "address": "Hillside Terrace, Dracut, Middlesex County, Massachusetts, United States of America",
+            "town": "Dracut",
+            "candidate_count": 4
+          },
+          {
+            "street_name": "HILLTOP RD",
+            "latitude": 42.6882835,
+            "longitude": -71.36478,
+            "address": "Hilltop Road, Long Pond Park, Dracut, Middlesex County, Massachusetts, 01854, United States of America",
+            "town": "Long Pond Park",
+            "candidate_count": 2
+          },
+          {
+            "street_name": "LONG DR",
+            "latitude": 42.684826,
+            "longitude": -71.3642179,
+            "address": "Long Drive, Dracut, Middlesex County, Massachusetts, 01854, United States of America",
+            "town": "Dracut",
+            "candidate_count": 2
+          },
+          {
+            "street_name": "LONG POND",
+            "latitude": 42.6930641,
+            "longitude": -71.3712679,
+            "address": "Long Pond, Long Pond Park, Dracut, Middlesex County, Massachusetts, United States of America",
+            "town": "Long Pond Park",
+            "candidate_count": 1
+          },
+          {
+            "street_name": "LONG POND DR",
+            "latitude": 42.6855058,
+            "longitude": -71.3628842,
+            "address": "Long Pond Drive, Collinsville, Dracut, Middlesex County, Massachusetts, 01854, United States of America",
+            "town": "Collinsville",
+            "candidate_count": 2
+          },
+          {
+            "street_name": "MIDWOOD RD",
+            "latitude": 42.6854062,
+            "longitude": -71.3639621,
+            "address": "Midwood Road, Dracut, Middlesex County, Massachusetts, 01854, United States of America",
+            "town": "Dracut",
+            "candidate_count": 2
+          },
+          {
+            "street_name": "MILLS DR",
+            "latitude": 42.68813,
+            "longitude": -71.3684423,
+            "address": "Mills Drive, Dracut, Middlesex County, Massachusetts, United States of America",
+            "town": "Dracut",
+            "candidate_count": 2
+          },
+          {
+            "street_name": "OVERLOOK TERR",
+            "latitude": 42.6871167,
+            "longitude": -71.364361,
+            "address": "Overlook Terrace, Dracut, Middlesex County, Massachusetts, 01854, United States of America",
+            "town": "Dracut",
+            "candidate_count": 4
+          },
+          {
+            "street_name": "SHORE DR",
+            "latitude": 42.6885012,
+            "longitude": -71.3695208,
+            "address": "Shore Drive, Long Pond Park, Dracut, Middlesex County, Massachusetts, United States of America",
+            "town": "Long Pond Park",
+            "candidate_count": 2
+          },
+          {
+            "street_name": "VALLEY RD",
+            "latitude": 42.6868051,
+            "longitude": -71.3646455,
+            "address": "Valley Road, Dracut, Middlesex County, Massachusetts, 01854, United States of America",
+            "town": "Dracut",
+            "candidate_count": 2
+          }
+        ],
+        "invalid_streets": [
+          "MAPLE RD"
+        ],
+        "primary_town": "Dracut",
+        "cluster_center_lat": 42.68740820833333,
+        "cluster_center_lon": -71.36550725833335,
+        "final_address": "108, Hillcrest Road, Collinsville, Dracut, Middlesex County, Massachusetts, 01854, United States of America",
+        "cluster_radius_miles": 0.5026775878735242,
+        "confidence": 0.8958860873664938,
+        "geocoding_stats": {
+          "total_streets": 13,
+          "total_candidates": 27,
+          "streets_geocoded": 12,
+          "primary_town": "Dracut",
+          "validated_streets": 12,
+          "invalid_streets": 1,
+          "cluster_radius_miles": 0.5026775878735242
+        }
+      },
+      "step4_completed": true
+    }
+  }
+}

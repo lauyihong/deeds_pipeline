@@ -179,44 +179,44 @@ def generate_quality_report(deed_data: Dict[str, Dict]) -> Dict[str, Any]:
     return report
 
 
-def run_step5(input_file: Path = STEP4_OUTPUT, 
+def run_step5(input_file: Path = STEP4_OUTPUT,
               output_json: Path = STEP5_OUTPUT,
               output_csv: Path = STEP5_OUTPUT_CSV) -> Dict[str, Any]:
     """
     Run Step 5: Data integration and export
-    
+
     Args:
         input_file: Path to Step 4 output file
         output_json: Path to final JSON output
         output_csv: Path to final CSV output
-    
+
     Returns:
         Dictionary with integrated data and quality report
     """
-    logger.info(f"Starting Step 5: Data Integration")
+    logger.info("Starting Step 5: Data Integration")
     logger.info(f"Input file: {input_file}")
     logger.info(f"Output JSON: {output_json}")
     logger.info(f"Output CSV: {output_csv}")
-    
+
     try:
         # Load input data
         logger.info("Loading Step 4 output...")
         deed_data = load_json(input_file)
         logger.info(f"Loaded {len(deed_data)} deed records")
-        
+
         # Flatten records for CSV export
         logger.info("Flattening deed records...")
         flattened_records = []
         for deed_id, deed_record in deed_data.items():
             flat_record = flatten_deed_record(deed_id, deed_record)
             flattened_records.append(flat_record)
-        
+
         logger.info(f"Flattened {len(flattened_records)} records")
-        
+
         # Generate quality report
         logger.info("Generating quality report...")
         quality_report = generate_quality_report(deed_data)
-        
+
         # Log quality report
         logger.info("=" * 60)
         logger.info("DATA QUALITY REPORT")
@@ -224,7 +224,7 @@ def run_step5(input_file: Path = STEP4_OUTPUT,
         for key, value in quality_report.items():
             logger.info(f"{key}: {value}")
         logger.info("=" * 60)
-        
+
         # Save JSON output (full nested structure)
         logger.info("Saving full JSON output...")
         final_output = {
@@ -235,21 +235,21 @@ def run_step5(input_file: Path = STEP4_OUTPUT,
             "deeds": deed_data
         }
         save_json(final_output, output_json)
-        
+
         # Save CSV output (flattened structure)
         logger.info("Saving CSV output...")
         df = pd.DataFrame(flattened_records)
         df.to_csv(output_csv, index=False, encoding='utf-8')
-        
-        logger.info(f"Step 5 completed.")
+
+        logger.info("Step 5 completed.")
         logger.info(f"JSON output: {output_json}")
         logger.info(f"CSV output: {output_csv}")
-        
+
         return {
             "quality_report": quality_report,
             "total_records": len(flattened_records)
         }
-        
+
     except Exception as e:
         logger.error(f"Error in Step 5: {e}", exc_info=True)
         raise
