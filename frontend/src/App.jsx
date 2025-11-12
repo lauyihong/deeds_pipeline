@@ -26,6 +26,12 @@ function App() {
       }
 
       const jsonData = await response.json()
+
+      // Convert deeds object to array if needed
+      if (jsonData.deeds && typeof jsonData.deeds === 'object' && !Array.isArray(jsonData.deeds)) {
+        jsonData.deeds = Object.values(jsonData.deeds)
+      }
+
       setData(jsonData)
     } catch (err) {
       setError(err.message)
@@ -74,14 +80,14 @@ function App() {
           </div>
         )}
 
-        {!loading && !error && (!data?.deeds || data.deeds.length === 0) && (
+        {!loading && !error && (!data?.deeds || (Array.isArray(data.deeds) && data.deeds.length === 0)) && (
           <div className="no-data">
             <h2>No deed data found</h2>
             <p>Run the pipeline steps first to generate data.</p>
           </div>
         )}
 
-        {!loading && !error && data?.deeds && (
+        {!loading && !error && data?.deeds && Array.isArray(data.deeds) && (
           data.deeds.map((deed, index) => (
             <DeedCard key={deed.deed_id || index} deed={deed} />
           ))

@@ -3,9 +3,25 @@ import MapComponent from './MapComponent'
 import StreetsList from './StreetsList'
 
 function DeedCard({ deed }) {
-  const validCount = deed.validated_streets?.length || 0
-  const invalidCount = deed.invalid_streets?.length || 0
-  const confidence = deed.cluster_center_lat ? deed.confidence : 0
+  // Flatten geolocation data for easier access
+  const geo = deed.geolocation || {}
+  const validCount = geo.validated_streets?.length || 0
+  const invalidCount = geo.invalid_streets?.length || 0
+  const confidence = geo.cluster_center_lat ? geo.confidence : 0
+
+  // Create a flattened deed object for MapComponent and other children
+  const flatDeed = {
+    deed_id: deed.deed_id,
+    county: deed.county,
+    primary_town: geo.primary_town,
+    cluster_center_lat: geo.cluster_center_lat,
+    cluster_center_lon: geo.cluster_center_lon,
+    final_address: geo.final_address,
+    cluster_radius_miles: geo.cluster_radius_miles,
+    confidence: geo.confidence,
+    validated_streets: geo.validated_streets || [],
+    invalid_streets: geo.invalid_streets || [],
+  }
 
   return (
     <div className="deed-card">
@@ -21,13 +37,13 @@ function DeedCard({ deed }) {
       </div>
 
       <div className="deed-content">
-        <MapComponent deed={deed} />
+        <MapComponent deed={flatDeed} />
 
         <div className="info-panels">
           <div className="info-panel">
             <div className="panel-header">✓ Validated Streets ({validCount})</div>
             <StreetsList
-              streets={deed.validated_streets || []}
+              streets={flatDeed.validated_streets}
               isValid={true}
             />
           </div>
@@ -35,26 +51,26 @@ function DeedCard({ deed }) {
           <div className="info-panel">
             <div className="panel-header">✗ Invalid Streets ({invalidCount})</div>
             <StreetsList
-              streets={deed.invalid_streets || []}
+              streets={flatDeed.invalid_streets}
               isValid={false}
             />
           </div>
 
-          {deed.cluster_center_lat && (
+          {flatDeed.cluster_center_lat && (
             <div className="location-info">
               <h4>📍 Final Location</h4>
               <div className="location-detail">
-                <strong>Town:</strong> {deed.primary_town}
+                <strong>Town:</strong> {flatDeed.primary_town}
               </div>
               <div className="location-detail">
-                <strong>Address:</strong> {deed.final_address || 'N/A'}
+                <strong>Address:</strong> {flatDeed.final_address || 'N/A'}
               </div>
               <div className="location-detail">
                 <strong>Coordinates:</strong>{' '}
-                {deed.cluster_center_lat.toFixed(6)}, {deed.cluster_center_lon.toFixed(6)}
+                {flatDeed.cluster_center_lat.toFixed(6)}, {flatDeed.cluster_center_lon.toFixed(6)}
               </div>
               <div className="location-detail">
-                <strong>Cluster Radius:</strong> {deed.cluster_radius_miles?.toFixed(2)} miles
+                <strong>Cluster Radius:</strong> {flatDeed.cluster_radius_miles?.toFixed(2)} miles
               </div>
               <div className="location-detail">
                 <strong>Confidence:</strong> {(confidence * 100).toFixed(1)}%
