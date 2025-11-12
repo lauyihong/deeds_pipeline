@@ -30,19 +30,35 @@ def reformat_deed_reviews(input_data: List[Dict]) -> Dict[str, Dict]:
     {
         "1612": {
             "deed_id": 1612,
-            "review_ids": [14, 15],
-            "city": null,
-            "deed_date": "1942-06-06",
-            "addresses": [],
-            "is_restrictive_covenant": true,
-            "exact_language_covenants": ["..."],
-            "grantors": ["Fred E. Kroker", "Ethel W. Kroker"],
-            "grantees": ["Timothy F. Keane", "Anna M. Keane"],
-            "additional_locational_information": ["..."],
-            "exclusion_types": ["White people only"],
-            "county": "Northern Middlesex",
-            "book_page_urls": ["url1", "url2"],
-            "full_texts": ["..."]
+            "reviews": {
+                "14":{
+                "city": null,
+                "deed_date": "1942-06-06",
+                "addresses": [],
+                "is_restrictive_covenant": true,
+                "exact_language_covenants": ["..."],
+                "grantors": ["Fred E. Kroker", "Ethel W. Kroker"],
+                "grantees": ["Timothy F. Keane", "Anna M. Keane"],
+                "additional_locational_information": ["..."],
+                "exclusion_types": ["White people only"],
+                "county": "Northern Middlesex",
+                "full_texts": ["..."]
+                },
+                
+                "15":{
+                
+                    },            
+                "city": null, # REPEAT THE FIRST INFO AS THE GROUND TRUTH. FOR NOW
+                "deed_date": "1942-06-06",
+                "addresses": [],
+                "grantors": ["Fred E. Kroker", "Ethel W. Kroker"],
+                "grantees": ["Timothy F. Keane", "Anna M. Keane"],
+                "additional_locational_information": ["..."],
+                "exclusion_types": ["White people only"],
+                "county": "Northern Middlesex",
+                "full_texts": ["..."]
+                
+                }
         }
     }
     """
