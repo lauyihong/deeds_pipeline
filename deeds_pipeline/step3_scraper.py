@@ -1,10 +1,32 @@
 """
 Step 3: MassLand Scraper
 Scrape additional geographic information from MassLand Records website
+
+Input contract per deed (refined):
+- deed_id: str
+- county: str (e.g., "Middlesex County")
+- town: Optional[str] (preferred if known)
+- book_page_pairs: List[{"book": str|int, "page": str|int}]
+
+Augmented output per deed:
+- scraper_results: [ { book, page, status, metadata } ]
+- extracted_streets: unique street names from metadata.property_info[*]."Street Name"
+- town: if missing, set from search_result_info.town when available
+- step3_completed: true
 """
 
-from typing import Dict, List, Optional
+from __future__ import annotations
+
+import time
+from typing import Dict, List, Optional, Tuple
 from pathlib import Path
+
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait, Select
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException, NoSuchElementException
+from selenium.webdriver.chrome.options import Options
 
 from .utils import setup_logger, load_json, save_json, get_cache_key, load_from_cache, save_to_cache
 from .config import STEP2_OUTPUT, STEP3_OUTPUT, ENABLE_CACHE, CHROME_HEADLESS
@@ -13,238 +35,312 @@ from .config import STEP2_OUTPUT, STEP3_OUTPUT, ENABLE_CACHE, CHROME_HEADLESS
 logger = setup_logger("step3_scraper", "step3.log")
 
 
-def initialize_scraper():
-    """
-    Initialize MassLandScraper instance
-    
-    Returns:
-        MassLandScraper instance
-    """
-    
-    # TODO: Import and initialize MassLandScraper
-    # Reference: other_repo/test_scrap/massland_scraper.py
-    # Class: MassLandScraper
-    
-    # TODO: Your implementation here
-    # Example:
-    # from other_repo.test_scrap.massland_scraper import MassLandScraper
-    # scraper = MassLandScraper(headless=CHROME_HEADLESS)
-    # return scraper
-    
-    logger.info("MassLandScraper initialized (placeholder)")
-    return None
+# --- Minimal embedded MassLandScraper (adapted from other_repo/test_scrap) ---
+class MassLandScraper:
+    def __init__(self, headless: bool = True):
+        chrome_options = Options()
+        if headless:
+            chrome_options.add_argument("--headless=new")
+        chrome_options.add_argument("--disable-dev-shm-usage")
+        chrome_options.add_argument("--window-size=1920,1080")
+        chrome_options.add_argument(
+            "user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        )
+        self.driver = webdriver.Chrome(options=chrome_options)
+        self.wait = WebDriverWait(self.driver, 20)
+
+    def navigate_to_search_page(self):
+        url = "https://www.masslandrecords.com/MiddlesexNorth/D/Default.aspx"
+        self.driver.get(url)
+        self.wait.until(EC.presence_of_element_located((By.TAG_NAME, "body")))
+        time.sleep(2)
+
+    def setup_search_criteria(self):
+        # Office -> Plans
+        office_select = self.wait.until(
+            EC.presence_of_element_located((By.ID, "SearchCriteriaOffice1_DDL_OfficeName"))
+        )
+        Select(office_select).select_by_visible_text("Plans")
+        time.sleep(1)
+        # Search Type -> Book Search
+        search_type_select = self.wait.until(
+            EC.presence_of_element_located((By.ID, "SearchCriteriaName1_DDL_SearchName"))
+        )
+        # Try multiple labels
+        dropdown = Select(search_type_select)
+        for label in ("Plans Book Search", "Recorded Land Book Search", "Book Search"):
+            try:
+                dropdown.select_by_visible_text(label)
+                break
+            except Exception:
+                continue
+        time.sleep(1)
+
+    def search_by_book_page(self, book: str, page: str) -> bool:
+        try:
+            if not self._page_has("SearchFormEx1_ACSTextBox_Book"):
+                self.setup_search_criteria()
+            book_input = self.wait.until(
+                EC.presence_of_element_located((By.ID, "SearchFormEx1_ACSTextBox_Book"))
+            )
+            book_input.clear(); book_input.send_keys(str(book))
+            page_input = self.wait.until(
+                EC.presence_of_element_located((By.ID, "SearchFormEx1_ACSTextBox_PageNumber"))
+            )
+            page_input.clear(); page_input.send_keys(str(page))
+            search_btn = self.wait.until(
+                EC.element_to_be_clickable((By.ID, "SearchFormEx1_btnSearch"))
+            )
+            search_btn.click()
+            self.wait.until(EC.presence_of_element_located((By.ID, "DocList1_GridView_Document")))
+            time.sleep(1)
+            return True
+        except Exception:
+            return False
+
+    def _page_has(self, element_id: str) -> bool:
+        try:
+            self.driver.find_element(By.ID, element_id)
+            return True
+        except Exception:
+            return False
+
+    def check_search_results(self) -> int:
+        links = self.driver.find_elements(By.CSS_SELECTOR, "a[id*='ButtonRow_File Date']")
+        return len(links)
+
+    def extract_search_row_info(self) -> Dict:
+        info = {}
+        try:
+            link = self.driver.find_elements(By.CSS_SELECTOR, "a[id*='ButtonRow_File Date']")[0]
+            row = link.find_element(By.XPATH, "./ancestor::tr")
+            cells = row.find_elements(By.TAG_NAME, "td")
+            # File Date
+            info["file_date"] = link.text.strip()
+            # Rec Time
+            try:
+                info["rec_time"] = row.find_element(By.CSS_SELECTOR, "a[id*='ButtonRow_Rec. Time']").text.strip()
+            except Exception:
+                info["rec_time"] = cells[2].text.strip() if len(cells) > 2 else ""
+            # Book/Page
+            try:
+                info["book_page"] = row.find_element(By.CSS_SELECTOR, "a[id*='ButtonRow_Book/Page']").text.strip()
+            except Exception:
+                info["book_page"] = ""
+            # Type
+            try:
+                info["type_desc"] = row.find_element(By.CSS_SELECTOR, "a[id*='ButtonRow_Type Desc.']").text.strip()
+            except Exception:
+                info["type_desc"] = ""
+            # Town
+            try:
+                info["town"] = row.find_element(By.CSS_SELECTOR, "a[id*='ButtonRow_Town']").text.strip()
+            except Exception:
+                info["town"] = ""
+        except Exception:
+            pass
+        return info
+
+    def click_file_and_extract_metadata(self) -> Dict:
+        if self.check_search_results() == 0:
+            return {"error": "no_results"}
+        search_row_info = self.extract_search_row_info()
+        # Click first File Date link (JS click)
+        link = self.wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "#DocList1_GridView_Document a[id*='ButtonRow_File Date']")))
+        self.driver.execute_script("arguments[0].click();", link)
+        self.wait.until(EC.presence_of_element_located((By.ID, "DocDetails1_DetailsCell")))
+        time.sleep(1)
+        metadata = self.extract_metadata()
+        if search_row_info:
+            metadata["search_result_info"] = search_row_info
+        return metadata
+
+    def extract_metadata(self) -> Dict:
+        out: Dict = {}
+        # Document details
+        try:
+            details = self._extract_table("DocDetails1_GridView_Details")
+            if details:
+                out["document_details"] = details
+        except Exception:
+            pass
+        # Property info
+        try:
+            props = self._extract_table("DocDetails1_GridView_Property")
+            if props:
+                out["property_info"] = props
+        except Exception:
+            pass
+        # Grantor/grantee
+        try:
+            gg = self._extract_table("DocDetails1_GridView_GrantorGrantee")
+            if gg:
+                out["grantor_grantee"] = gg
+        except Exception:
+            pass
+        return out if out else {"error": "no_metadata"}
+
+    def _extract_table(self, table_id: str) -> List[Dict]:
+        table = self.driver.find_element(By.ID, table_id)
+        rows = table.find_elements(By.CSS_SELECTOR, "tr.DataGridRow")
+        # headers
+        headers = []
+        try:
+            header_row = table.find_element(By.CSS_SELECTOR, "tr.DataGridHeader, tr th")
+            header_cells = header_row.find_elements(By.TAG_NAME, "th")
+            headers = [c.text.strip() for c in header_cells]
+        except Exception:
+            pass
+        data: List[Dict] = []
+        for row in rows:
+            cells = row.find_elements(By.TAG_NAME, "td")
+            record = {}
+            for i, cell in enumerate(cells):
+                key = headers[i] if i < len(headers) and headers[i] else f"column_{i}"
+                try:
+                    link = cell.find_element(By.TAG_NAME, "a")
+                    text = link.text.strip() or cell.text.strip()
+                    record[key] = text
+                    record[f"{key}_link"] = link.get_attribute("href") or ""
+                except Exception:
+                    record[key] = cell.text.strip()
+            if record:
+                data.append(record)
+        return data
+
+    def process_record(self, book: str, page: str) -> Dict:
+        self.navigate_to_search_page()
+        status = self.search_by_book_page(book, page)
+        metadata = self.click_file_and_extract_metadata() if status else None
+        return {
+            "book": str(book),
+            "page": str(page),
+            "metadata": metadata or {},
+            "status": "success" if metadata and "error" not in str(metadata) else "failed",
+        }
+
+    def close(self):
+        try:
+            self.driver.quit()
+        except Exception:
+            pass
 
 
-def extract_book_page_from_deed(deed_record: Dict) -> List[tuple]:
-    """
-    Extract book and page numbers from deed record
-    
-    Args:
-        deed_record: Deed record with OCR results from Step 2
-    
-    Returns:
-        List of (book, page) tuples to scrape
-    """
-    book_pages = []
-    
-    # Extract from OCR results
-    ocr_results = deed_record.get("ocr_results", [])
-    
-    for result in ocr_results:
-        extracted_info = result.get("extracted_info", {})
-        plan_books = extracted_info.get("plan_book", [])
-        plan_pages = extracted_info.get("plan_pages", [])
-        
-        if plan_books and plan_pages:
-            # Match books with pages
-            for book in plan_books:
-                for page in plan_pages:
-                    book_pages.append((book, page))
-    
-    # Remove duplicates
-    book_pages = list(set(book_pages))
-    
-    return book_pages
+def initialize_scraper() -> MassLandScraper:
+    logger.info("MassLandScraper initialized")
+    return MassLandScraper(headless=CHROME_HEADLESS)
 
 
-def scrape_massland_record(scraper, book: str, page: str) -> Optional[Dict]:
-    """
-    Scrape a single book/page record from MassLand
-    
-    Args:
-        scraper: MassLandScraper instance
-        book: Book number
-        page: Page number
-    
-    Returns:
-        Scraped metadata dictionary or None if failed
-    """
-    
-    # TODO: Implement scraping logic
-    # 1. Navigate to search page
-    # 2. Search by book and page
-    # 3. Extract metadata (property info, streets, etc.)
-    # 4. Return structured data
-    
-    # Reference: other_repo/test_scrap/massland_scraper.py
-    # Method: scraper.process_record(book, page)
-    
+def extract_book_page_from_deed(deed_record: Dict) -> List[Tuple[str, str]]:
+    """Extract book/page pairs from deed_record['book_page_pairs']"""
+    pairs = []
+    for item in deed_record.get("book_page_pairs", []):
+        book = str(item.get("book", "")).strip()
+        page = str(item.get("page", "")).strip()
+        if book and page:
+            pairs.append((book, page))
+    # dedupe
+    return sorted(set(pairs))
+
+
+def scrape_massland_record(scraper: MassLandScraper, book: str, page: str) -> Optional[Dict]:
     logger.debug(f"Scraping book={book}, page={page}")
-    
-    # TODO: Your implementation here
-    # Example:
-    # scraper.navigate_to_search_page()
-    # if scraper.search_by_book_page(book, page):
-    #     metadata = scraper.click_file_and_extract_metadata()
-    #     return metadata
-    # return None
-    
-    return {
-        "book": book,
-        "page": page,
-        "metadata": {},
-        "status": "placeholder"
-    }
+    try:
+        return scraper.process_record(book, page)
+    except Exception as e:
+        logger.warning(f"Scrape failed for {book}/{page}: {e}")
+        return {"book": str(book), "page": str(page), "metadata": {"error": str(e)}, "status": "error"}
 
 
-def extract_streets_from_metadata(metadata: Dict) -> List[str]:
-    """
-    Extract street names from scraped metadata
-    
-    Args:
-        metadata: Scraped metadata from MassLand
-    
-    Returns:
-        List of street names
-    """
-    streets = []
-    
-    # Extract from property_info
-    property_info = metadata.get("metadata", {}).get("property_info", [])
-    
+def extract_streets_from_scraper_result(scraper_result: Dict) -> List[str]:
+    streets: List[str] = []
+    property_info = scraper_result.get("metadata", {}).get("property_info", [])
     for prop in property_info:
-        street_name = prop.get("Street Name")
-        if street_name:
-            streets.append(street_name)
-    
-    return list(set(streets))  # Remove duplicates
+        name = prop.get("Street Name") or prop.get("street_name")
+        if name:
+            streets.append(name.strip())
+    return sorted(set(streets))
 
 
-def process_deed_scraping(deed_record: Dict, scraper) -> Dict:
-    """
-    Process scraping for a single deed record
-    
-    Args:
-        deed_record: Deed record from Step 2
-        scraper: MassLandScraper instance
-    
-    Returns:
-        Deed record with added scraper results
-    """
+def process_deed_scraping(deed_record: Dict, scraper: MassLandScraper) -> Dict:
     deed_id = deed_record.get("deed_id")
-    
-    # Check cache
+
+    # Cache
     if ENABLE_CACHE:
         cache_key = get_cache_key("step3", deed_id)
         cached = load_from_cache(cache_key)
         if cached:
             logger.info(f"Deed {deed_id}: Loaded from cache")
             return cached
-    
-    # Extract book/page numbers to scrape
+
     book_pages = extract_book_page_from_deed(deed_record)
-    
     if not book_pages:
         logger.warning(f"Deed {deed_id}: No book/page numbers found")
         deed_record["scraper_results"] = []
+        deed_record["extracted_streets"] = []
         deed_record["step3_completed"] = True
         return deed_record
-    
+
     logger.info(f"Deed {deed_id}: Scraping {len(book_pages)} book/page combinations")
-    
-    scraper_results = []
-    all_streets = []
-    
+
+    scraper_results: List[Dict] = []
+    all_streets: List[str] = []
+    town_from_results: Optional[str] = deed_record.get("town") or None
+
     for book, page in book_pages:
-        logger.info(f"Deed {deed_id}: Scraping book={book}, page={page}")
-        
-        metadata = scrape_massland_record(scraper, book, page)
-        
-        if metadata:
-            scraper_results.append(metadata)
-            
-            # Extract streets
-            streets = extract_streets_from_metadata(metadata)
-            all_streets.extend(streets)
-    
-    # Remove duplicate streets
-    all_streets = list(set(all_streets))
-    
+        result = scrape_massland_record(scraper, book, page)
+        scraper_results.append(result)
+        streets = extract_streets_from_scraper_result(result)
+        all_streets.extend(streets)
+        # capture town if available
+        if not town_from_results:
+            town = result.get("metadata", {}).get("search_result_info", {}).get("town")
+            if town:
+                town_from_results = town
+
     deed_record["scraper_results"] = scraper_results
-    deed_record["extracted_streets"] = all_streets
+    deed_record["extracted_streets"] = sorted(set(all_streets))
+    if town_from_results and not deed_record.get("town"):
+        deed_record["town"] = town_from_results
     deed_record["step3_completed"] = True
-    
-    # Save to cache
+
     if ENABLE_CACHE:
         save_to_cache(cache_key, deed_record)
-    
+
     return deed_record
 
 
 def run_step3(input_file: Path = STEP2_OUTPUT, output_file: Path = STEP3_OUTPUT) -> Dict[str, Dict]:
-    """
-    Run Step 3: Scrape MassLand records
-    
-    Args:
-        input_file: Path to Step 2 output file
-        output_file: Path to Step 3 output file
-    
-    Returns:
-        Deed data with scraper results
-    """
     logger.info(f"Starting Step 3: MassLand Scraper")
     logger.info(f"Input file: {input_file}")
     logger.info(f"Output file: {output_file}")
-    
-    scraper = None
-    
+
+    scraper: Optional[MassLandScraper] = None
     try:
-        # Load input data
-        logger.info("Loading Step 2 output...")
         deed_data = load_json(input_file)
         logger.info(f"Loaded {len(deed_data)} deed records")
-        
-        # Initialize scraper
-        logger.info("Initializing MassLandScraper...")
+
         scraper = initialize_scraper()
-        
-        # Process each deed
-        processed_data = {}
+
+        processed_data: Dict[str, Dict] = {}
         total = len(deed_data)
-        
         for idx, (deed_id, deed_record) in enumerate(deed_data.items(), 1):
             logger.info(f"Processing deed {deed_id} ({idx}/{total})")
             processed_data[deed_id] = process_deed_scraping(deed_record, scraper)
-        
-        # Save output
-        logger.info("Saving processed data...")
+
         save_json(processed_data, output_file)
         logger.info(f"Step 3 completed. Output saved to {output_file}")
-        
         return processed_data
-        
+
     except Exception as e:
         logger.error(f"Error in Step 3: {e}", exc_info=True)
         raise
-        
     finally:
-        # Close scraper
         if scraper:
             try:
                 scraper.close()
-                logger.info("MassLandScraper closed")
-            except Exception as e:
-                logger.warning(f"Error closing scraper: {e}")
+            except Exception:
+                pass
 
 
 if __name__ == "__main__":
