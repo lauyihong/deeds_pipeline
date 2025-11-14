@@ -63,31 +63,48 @@ def reformat_deed_reviews(input_data: List[Dict]) -> Dict[str, Dict]:
     }
     """
     
-    # TODO: Implement the grouping logic
-    # 1. Create a dictionary to hold deed_id as keys
-    # 2. Iterate through input_data
-    # 3. For each record, extract deed_id
-    # 4. Group records by deed_id
-    # 5. For each deed_id, consolidate information:
-    #    - Collect all review_ids
-    #    - Use the most recent/complete information for single-value fields
-    #    - Collect unique values for list fields (covenants, URLs, etc.)
-    # 6. Return the consolidated dictionary
-    
     reformatted_data = {}
     
     logger.info(f"Processing {len(input_data)} deed review records")
     
-    # TODO: Your implementation here
-    # Example skeleton:
-    # for review in input_data:
-    #     deed_id = str(review.get("deed_id"))
-    #     if deed_id not in reformatted_data:
-    #         reformatted_data[deed_id] = initialize_deed_record(deed_id)
-    #     merge_review_into_deed(reformatted_data[deed_id], review)
-    
+    for review in input_data:
+        deed_id = str(review.get("deed_id"))
+        deed_review_id = str(review.get("deed_review_id"))
+        
+        if deed_id not in reformatted_data:
+            reformatted_data[deed_id] = {
+                "deed_id": deed_id,
+                "reviews": {}
+            }
+            reformatted_data[deed_id]["city"] = review.get("city")
+            reformatted_data[deed_id]["deed_date"] = review.get("deed_date")
+            reformatted_data[deed_id]["addresses"] = review.get("addresses")
+            reformatted_data[deed_id]["grantors"] = review.get("grantors")
+            reformatted_data[deed_id]["grantees"] = review.get("grantees")
+            reformatted_data[deed_id]["additional_locational_information"] = review.get("additional_locational_information")
+            reformatted_data[deed_id]["exclusion_types"] = review.get("exclusion_types")
+            reformatted_data[deed_id]["county"] = review.get("county")
+            reformatted_data[deed_id]["full_texts"] = review.get("full_texts")
+            reformatted_data[deed_id]["book_page_urls"] = review.get("book_page_urls")
+        
+        transformed_review = {
+            "city": review.get("city"),
+            "deed_date": review.get("deed_date"),
+            "addresses": review.get("addresses"),
+            "is_restrictive_covenant": review.get("is_restrictive_covenant"),
+            "exact_language_covenants": review.get("exact_language_covenants"),
+            "grantors": review.get("grantors"),
+            "grantees": review.get("grantees"),
+            "additional_locational_information": review.get("additional_locational_information"),
+            "exclusion_types": review.get("exclusion_types"),
+            "county": review.get("county"),
+            "full_texts": review.get("full_texts"),
+            "book_page_urls": review.get("book_page_urls")
+        }
+
+        reformatted_data[deed_id]["reviews"][deed_review_id] = transformed_review
+
     logger.info(f"Consolidated into {len(reformatted_data)} unique deed records")
-    
     return reformatted_data
 
 
