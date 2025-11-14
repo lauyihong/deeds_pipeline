@@ -2,15 +2,50 @@
 Step 2: OCR and Information Extraction
 Extract structured information from deed images using OCR and AI models
 """
-
+import io
+import json
+import re
+import requests
+import torch
+import os
+from dotenv import load_dotenv
 from typing import Dict, List, Optional
 from pathlib import Path
+from google import genai
+from transformers import AutoTokenizer, AutoModelForCausalLM
+from PIL import Image
+from google.cloud import vision
+from google.cloud.vision_v1 import ImageAnnotatorClient
+from google.api_core.client_options import ClientOptions
 
 from .utils import setup_logger, load_json, save_json, get_cache_key, load_from_cache, save_to_cache
 from .config import STEP1_OUTPUT, STEP2_OUTPUT, ENABLE_CACHE
 
 
 logger = setup_logger("step2_ocr_extraction", "step2.log")
+
+# Setting up gemini API key
+load_dotenv()
+api_key = os.getenv("GOOGLE_API_KEY")
+if not api_key:
+    raise ValueError(
+        "GOOGLE_API_KEY environment variable not set. "
+        "Please set it in your environment or create a .env file with GOOGLE_API_KEY=your-key"
+    )
+gemini_client = genai.Client(api_key=api_key)
+
+# Initializing Google Vision client
+PROJECT_ID = 'vision-ocr-476615'
+os.environ['GOOGLE_CLOUD_PROJECT'] = PROJECT_ID
+os.environ['GCLOUD_PROJECT'] = PROJECT_ID
+client_options = ClientOptions(quota_project_id=PROJECT_ID)
+client = ImageAnnotatorClient(client_options=client_options)
+
+
+# Load reglab model
+tokenizer = AutoTokenizer.from_pretrained("reglab-rrc/mistral-rrc")
+model = AutoModelForCausalLM.from_pretrained("reglab-rrc/mistral-rrc", trust_remote_code=True)
+
 
 
 def extract_text_with_google_vision(image_url: str) -> Optional[str]:
@@ -24,27 +59,49 @@ def extract_text_with_google_vision(image_url: str) -> Optional[str]:
         Extracted text or None if failed
     """
     
-    # TODO: Implement Google Vision OCR
-    # 1. Download image from URL
-    # 2. Call Google Vision API for text detection
-    # 3. Extract full_text_annotation.text
-    # 4. Return extracted text
-    
-    # Reference: other_repo/mistral_rrc_updated.ipynb
-    # Function: extract_text_with_google_vision()
-    
     logger.debug(f"Extracting text from image: {image_url}")
     
-    # TODO: Your implementation here
-    # Example:
-    # from google.cloud import vision
-    # client = vision.ImageAnnotatorClient()
-    # image = vision.Image()
-    # image.source.image_uri = image_url
-    # response = client.document_text_detection(image=image)
-    # return response.full_text_annotation.text
+    try:
+        # Load image
+        image_bytes = requests.get(image_url).content
+        image = Image.open(io.BytesIO(image_bytes))
+
+        # OCR
+        logger.info("\n2️⃣ Performing OCR using Google Vision API")
+        vision_image = vision.Image(content=image_bytes)
+
+        response = client.document_text_detection(image=vision_image)
+
+        if response.error.message:
+            raise Exception(f"API error: {response.error.message}")
+
+        full_text = response.full_text_annotation.text
+
+        logger.info(f"✅ OCR completed!")
+        logger.info(f"Text length: {len(full_text)} characters")
+
+        # Keyword detection
+        keywords = [
+            "race", "racial", "Caucasian", "white",
+            "negro", "colored", "African", "Chinese",
+            "Japanese", "Mongolian", "covenant", "sell",
+            "lease", "rent", "occupy"
+        ]
+
+        found_keywords = [kw for kw in keywords if kw.lower() in full_text.lower()]
+
+        if found_keywords:
+            logger.info(f"✅ Keywords found: {', '.join(found_keywords)}")
+        else:
+            logger.info(f"⚠️  No racial restriction keywords found")
+
+        return full_text
+
+    except Exception as e:
+        logger.info(f"\n❌ Google Vision OCR failed!")
+        logger.info(f"Error: {str(e)}")
+        return None
     
-    return None
 
 
 def detect_restrictive_covenant(text: str) -> Dict[str, any]:
@@ -62,34 +119,51 @@ def detect_restrictive_covenant(text: str) -> Dict[str, any]:
             "corrected_quotation": str
         }
     """
+
+    def parse_output(output):
+        answer_match = re.search(r"\[ANSWER\](.*?)\[/ANSWER\]", output, re.DOTALL)
+        raw_passage_match = re.search(r"\[RAW PASSAGE\](.*?)\[/RAW PASSAGE\]", output, re.DOTALL)
+        quotation_match = re.search(r"\[CORRECTED QUOTATION\](.*?)\[/CORRECTED QUOTATION\]", output, re.DOTALL)
+
+        answer = answer_match.group(1).strip() if answer_match else None
+        raw_passage = raw_passage_match.group(1).strip() if raw_passage_match else None
+        quotation = quotation_match.group(1).strip() if quotation_match else None
+
+        return {
+            "answer": answer == "Yes",
+            "raw_passage": raw_passage,
+            "quotation": quotation
+        }
     
-    # TODO: Implement Mistral-RRC covenant detection
-    # 1. Format prompt using format_prompt()
-    # 2. Call Mistral-RRC model for generation
-    # 3. Parse output using parse_output()
-    # 4. Return structured result
-    
-    # Reference: other_repo/mistral_rrc_updated.ipynb
-    # Functions: format_prompt(), parse_output()
-    # Model: "reglab-rrc/mistral-rrc"
+    def format_prompt(document):
+        return f"""### Instruction:
+        Determine whether the property deed contains a racial covenant. A racial covenant is a clause in a document that restricts who can reside, own, or occupy a property on the basis of race, ethnicity, national origin, or religion. Answer "Yes" or "No". If "Yes", provide the exact text of the relevant passage and then a quotation of the passage with spelling and formatting errors fixed.
+
+        ### Input:
+        {document}
+
+        ### Response:"""
+
     
     logger.debug(f"Detecting restrictive covenant in text (length: {len(text)})")
-    
-    # TODO: Your implementation here
-    # Example:
-    # from transformers import AutoTokenizer, AutoModelForCausalLM
-    # tokenizer = AutoTokenizer.from_pretrained("reglab-rrc/mistral-rrc")
-    # model = AutoModelForCausalLM.from_pretrained("reglab-rrc/mistral-rrc")
-    # prompt = format_prompt(text)
-    # inputs = tokenizer(prompt, return_tensors="pt")
-    # outputs = model.generate(**inputs, max_new_tokens=512)
-    # result = tokenizer.decode(outputs[0])
-    # return parse_output(result)
-    
+    prompt = format_prompt(text)
+    inputs = tokenizer(prompt, return_tensors="pt")
+
+    if torch.cuda.is_available():
+        inputs = {k: v.cuda() for k, v in inputs.items()}
+        if not next(model.parameters()).is_cuda:
+            model.cuda()
+
+    with torch.no_grad():
+        outputs = model.generate(**inputs, max_new_tokens=512, temperature=0.1)
+
+    result_text = tokenizer.decode(outputs[0])
+    parsed_result = parse_output(result_text)
+
     return {
-        "covenant_detected": False,
-        "raw_passage": None,
-        "corrected_quotation": None
+        "covenant_detected": parsed_result["answer"],
+        "raw_passage": parsed_result.get("raw_passage", "N/A"),
+        "corrected_quotation": parsed_result.get("quotation", "N/A"),
     }
 
 
@@ -110,34 +184,57 @@ def extract_deed_info_with_gemini(ocr_text: str) -> Dict[str, Optional[List[str]
             "city_town": str or None
         }
     """
-    
-    # TODO: Implement Gemini extraction
-    # 1. Format prompt with OCR text
-    # 2. Call Gemini API (gemini-2.5-flash model)
-    # 3. Parse JSON response
-    # 4. Return structured data
-    
-    # Reference: other_repo/mistral_rrc_updated.ipynb
-    # Function: extract_deed_info_with_gemini()
-    
+
     logger.debug(f"Extracting deed info with Gemini (text length: {len(ocr_text)})")
     
-    # TODO: Your implementation here
-    # Example:
-    # from google import genai
-    # client = genai.Client(api_key=GEMINI_API_KEY)
-    # prompt = f"""Extract structured info from deed text: {ocr_text}
-    # Return as JSON with keys: plan_book, plan_pages, lot_numbers, street_addresses, city_town"""
-    # response = client.models.generate_content(model="gemini-2.5-flash", contents=prompt)
-    # return json.loads(response.text)
-    
-    return {
-        "plan_book": None,
-        "plan_pages": None,
-        "lot_numbers": None,
-        "street_addresses": None,
-        "city_town": None
-    }
+    prompt = f"""
+    You are an expert at reading property deeds and land records.
+    From the following OCR text, extract structured information only about the property being conveyed in the deed if available.
+    - Only return plan book and location information that document the conveyance of the property being transferred.
+    - Ignore plan book or location information that refer to easements, right of ways, or conveyances affecting other properties.
+
+    Text:
+    {ocr_text}
+
+    Please return your response as valid JSON with these keys:
+    {{
+        "plan_book": [string] or null,
+        "plan_pages": [string] or null,
+        "lot_numbers": [string] or null,
+        "street_addresses": [string] or null,
+        "city_town": [string] or null
+    }}
+
+    Example:
+    {{
+      "plan_book": ["123"],
+      "plan_pages": ["45", "46"],
+      "lot_numbers": ["96"],
+      "street_addresses": ["Hilltop Road"],
+      "city_town": ["Dracut"]
+    }}
+    """
+    try:
+        response = gemini_client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt
+        )
+
+        # Parse model response
+        text = response.text.strip()
+        json_text = text[text.find("{"): text.rfind("}")+1]
+        data = json.loads(json_text)
+        return data
+
+    except Exception as e:
+        logger.warning(f"⚠️ Gemini extraction error: {e}")
+        return {
+            "plan_book": None,
+            "plan_pages": None,
+            "lot_numbers": None,
+            "street_addresses": None,
+            "city_town": None
+        }
 
 
 def process_deed_images(deed_record: Dict) -> Dict:
@@ -166,7 +263,7 @@ def process_deed_images(deed_record: Dict) -> Dict:
         if cached:
             logger.info(f"Deed {deed_id}: Loaded from cache")
             return cached
-    
+
     ocr_results = []
     
     for idx, url in enumerate(book_page_urls):
