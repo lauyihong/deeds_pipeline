@@ -1,10 +1,12 @@
 """
 Step 5: Data Integration
 Consolidate all processing results into final dataset
+
+Function-based interface for notebook integration.
 """
 
 import pandas as pd
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Tuple
 from pathlib import Path
 
 from .utils import setup_logger, load_json, save_json
@@ -179,11 +181,61 @@ def generate_quality_report(deed_data: Dict[str, Dict]) -> Dict[str, Any]:
     return report
 
 
+def process_deeds_integration(deed_records: List[Dict]) -> Tuple[List[Dict], pd.DataFrame, Dict[str, Any]]:
+    """
+    FUNCTION-BASED INTERFACE for notebook integration.
+    Integrate and flatten deed records for final output.
+
+    Args:
+        deed_records: List of deed dictionaries from Step 4
+
+    Returns:
+        Tuple of (full_records, flattened_dataframe, quality_report)
+    """
+    logger.info(f"Starting Step 5 processing for {len(deed_records)} deed(s)")
+
+    # Convert list to dict format for generate_quality_report
+    deed_data = {
+        record["deed_id"]: record
+        for record in deed_records
+    }
+
+    # Flatten records for CSV export
+    logger.info("Flattening deed records...")
+    flattened_records = []
+    for deed_record in deed_records:
+        deed_id = deed_record.get("deed_id", "unknown")
+        flat_record = flatten_deed_record(deed_id, deed_record)
+        flattened_records.append(flat_record)
+
+    logger.info(f"Flattened {len(flattened_records)} records")
+
+    # Generate quality report
+    logger.info("Generating quality report...")
+    quality_report = generate_quality_report(deed_data)
+
+    # Log quality report
+    logger.info("=" * 60)
+    logger.info("DATA QUALITY REPORT")
+    logger.info("=" * 60)
+    for key, value in quality_report.items():
+        logger.info(f"{key}: {value}")
+    logger.info("=" * 60)
+
+    # Create DataFrame
+    df = pd.DataFrame(flattened_records)
+
+    logger.info(f"Step 5 completed for {len(deed_records)} deed(s)")
+
+    return deed_records, df, quality_report
+
+
 def run_step5(input_file: Path = STEP4_OUTPUT,
               output_json: Path = STEP5_OUTPUT,
               output_csv: Path = STEP5_OUTPUT_CSV) -> Dict[str, Any]:
     """
-    Run Step 5: Data integration and export
+    FILE-BASED INTERFACE (legacy/CLI mode).
+    Run Step 5: Data integration and export.
 
     Args:
         input_file: Path to Step 4 output file
@@ -193,52 +245,41 @@ def run_step5(input_file: Path = STEP4_OUTPUT,
     Returns:
         Dictionary with integrated data and quality report
     """
-    logger.info("Starting Step 5: Data Integration")
+    logger.info("Starting Step 5: Data Integration (file-based mode)")
     logger.info(f"Input file: {input_file}")
     logger.info(f"Output JSON: {output_json}")
     logger.info(f"Output CSV: {output_csv}")
 
     try:
-        # Load input data
-        logger.info("Loading Step 4 output...")
+        # Load input data (dict format: {deed_id: {...}, ...})
         deed_data = load_json(input_file)
         logger.info(f"Loaded {len(deed_data)} deed records")
 
-        # Flatten records for CSV export
-        logger.info("Flattening deed records...")
-        flattened_records = []
-        for deed_id, deed_record in deed_data.items():
-            flat_record = flatten_deed_record(deed_id, deed_record)
-            flattened_records.append(flat_record)
+        # Convert dict to list format for process_deeds_integration
+        deed_records = list(deed_data.values())
 
-        logger.info(f"Flattened {len(flattened_records)} records")
+        # Process using function interface
+        processed_records, df, quality_report = process_deeds_integration(deed_records)
 
-        # Generate quality report
-        logger.info("Generating quality report...")
-        quality_report = generate_quality_report(deed_data)
-
-        # Log quality report
-        logger.info("=" * 60)
-        logger.info("DATA QUALITY REPORT")
-        logger.info("=" * 60)
-        for key, value in quality_report.items():
-            logger.info(f"{key}: {value}")
-        logger.info("=" * 60)
+        # Convert back to dict format for JSON output
+        deed_data_final = {
+            record["deed_id"]: record
+            for record in processed_records
+        }
 
         # Save JSON output (full nested structure)
         logger.info("Saving full JSON output...")
         final_output = {
             "metadata": {
-                "total_deeds": len(deed_data),
+                "total_deeds": len(deed_data_final),
                 "quality_report": quality_report
             },
-            "deeds": deed_data
+            "deeds": deed_data_final
         }
         save_json(final_output, output_json)
 
         # Save CSV output (flattened structure)
         logger.info("Saving CSV output...")
-        df = pd.DataFrame(flattened_records)
         df.to_csv(output_csv, index=False, encoding='utf-8')
 
         logger.info("Step 5 completed.")
@@ -247,7 +288,7 @@ def run_step5(input_file: Path = STEP4_OUTPUT,
 
         return {
             "quality_report": quality_report,
-            "total_records": len(flattened_records)
+            "total_records": len(processed_records)
         }
 
     except Exception as e:

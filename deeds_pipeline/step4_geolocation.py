@@ -1,10 +1,13 @@
 """
 Step 4: Geolocation
 Geocode street addresses and calculate cluster centers
+
+Function-based interface for notebook integration with nest_asyncio support.
 """
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import re
 from dataclasses import dataclass
@@ -12,6 +15,14 @@ from typing import Dict, List, Optional, Tuple
 from pathlib import Path
 
 import httpx
+
+# Import nest_asyncio for Jupyter compatibility
+try:
+    import nest_asyncio
+    nest_asyncio.apply()
+    NEST_ASYNCIO_AVAILABLE = True
+except ImportError:
+    NEST_ASYNCIO_AVAILABLE = False
 
 from .utils import setup_logger, load_json, save_json, get_cache_key, load_from_cache, save_to_cache
 from .config import STEP3_OUTPUT, STEP4_OUTPUT, ENABLE_CACHE
@@ -441,24 +452,100 @@ async def process_deed_geolocation(deed_record: Dict, validator: StreetClusterin
     return deed_record
 
 
+async def process_deeds_geolocation_async(deed_records: List[Dict]) -> List[Dict]:
+    """
+    FUNCTION-BASED ASYNC INTERFACE for notebook integration.
+    Process multiple deed records with geolocation.
+
+    Args:
+        deed_records: List of deed dictionaries with extracted_streets
+
+    Returns:
+        Same list with each dict augmented with geolocation data
+    """
+    logger.info(f"Starting Step 4 processing for {len(deed_records)} deed(s)")
+
+    validator = initialize_clustering_validator()
+    processed_records = []
+
+    for idx, deed_record in enumerate(deed_records, 1):
+        deed_id = deed_record.get("deed_id", f"unknown_{idx}")
+        logger.info(f"[{idx}/{len(deed_records)}] Processing deed {deed_id}")
+
+        try:
+            processed = await process_deed_geolocation(deed_record, validator)
+            processed_records.append(processed)
+        except Exception as e:
+            logger.error(f"Deed {deed_id} geolocation failed: {e}", exc_info=True)
+            deed_record["geolocation"] = None
+            deed_record["step4_error"] = str(e)
+            deed_record["step4_completed"] = False
+            processed_records.append(deed_record)
+
+    logger.info(f"Step 4 completed for {len(processed_records)} deed(s)")
+    return processed_records
+
+
+def process_deeds_geolocation(deed_records: List[Dict]) -> List[Dict]:
+    """
+    FUNCTION-BASED SYNC INTERFACE for notebook integration.
+    Wraps async version with proper event loop handling.
+
+    This function detects if it's running in a Jupyter notebook
+    (which already has an event loop) and handles it appropriately.
+
+    Args:
+        deed_records: List of deed dictionaries with extracted_streets
+
+    Returns:
+        Same list with each dict augmented with geolocation data
+    """
+    try:
+        # Check if event loop is already running (Jupyter case)
+        loop = asyncio.get_running_loop()
+        # If we're here, loop is running - use await directly if possible
+        # Since we can't await in a sync function, create task
+        logger.info("Event loop detected (likely Jupyter). Using nest_asyncio.")
+        if not NEST_ASYNCIO_AVAILABLE:
+            logger.warning("nest_asyncio not installed. Install it: pip install nest-asyncio")
+            raise RuntimeError(
+                "Running in Jupyter but nest_asyncio not available. "
+                "Install it with: pip install nest-asyncio"
+            )
+        # With nest_asyncio.apply(), asyncio.run() should work in notebooks
+        return asyncio.run(process_deeds_geolocation_async(deed_records))
+    except RuntimeError:
+        # No event loop running - normal Python environment
+        return asyncio.run(process_deeds_geolocation_async(deed_records))
+
+
 async def run_step4_async(input_file: Path = STEP3_OUTPUT, output_file: Path = STEP4_OUTPUT) -> Dict[str, Dict]:
-    """Run Step 4 asynchronously over all deeds."""
-    logger.info(f"Starting Step 4: Geolocation")
+    """
+    FILE-BASED ASYNC INTERFACE (legacy/CLI mode).
+    Run Step 4 asynchronously over all deeds from JSON file.
+    """
+    logger.info(f"Starting Step 4: Geolocation (file-based mode)")
     logger.info(f"Input file: {input_file}")
     logger.info(f"Output file: {output_file}")
 
     try:
+        # Load input data (dict format: {deed_id: {...}, ...})
         deed_data = load_json(input_file)
         logger.info(f"Loaded {len(deed_data)} deed records")
 
-        validator = initialize_clustering_validator()
+        # Convert dict to list format
+        deed_records = list(deed_data.values())
 
-        processed_data: Dict[str, Dict] = {}
-        total = len(deed_data)
-        for idx, (deed_id, deed_record) in enumerate(deed_data.items(), 1):
-            logger.info(f"Processing deed {deed_id} ({idx}/{total})")
-            processed_data[deed_id] = await process_deed_geolocation(deed_record, validator)
+        # Process using function interface
+        processed_records = await process_deeds_geolocation_async(deed_records)
 
+        # Convert back to dict format
+        processed_data = {
+            record["deed_id"]: record
+            for record in processed_records
+        }
+
+        # Save to file
         save_json(processed_data, output_file)
         logger.info(f"Step 4 completed. Output saved to {output_file}")
         return processed_data
@@ -469,9 +556,23 @@ async def run_step4_async(input_file: Path = STEP3_OUTPUT, output_file: Path = S
 
 
 def run_step4(input_file: Path = STEP3_OUTPUT, output_file: Path = STEP4_OUTPUT) -> Dict[str, Dict]:
-    """Sync wrapper around the async runner."""
-    import asyncio
-    return asyncio.run(run_step4_async(input_file, output_file))
+    """
+    FILE-BASED SYNC INTERFACE (legacy/CLI mode).
+    Sync wrapper around the async runner.
+    """
+    try:
+        # Check if event loop is already running
+        loop = asyncio.get_running_loop()
+        # Running in notebook with nest_asyncio
+        if not NEST_ASYNCIO_AVAILABLE:
+            raise RuntimeError(
+                "Running in Jupyter but nest_asyncio not available. "
+                "Install it with: pip install nest-asyncio"
+            )
+        return asyncio.run(run_step4_async(input_file, output_file))
+    except RuntimeError:
+        # No event loop running - normal case
+        return asyncio.run(run_step4_async(input_file, output_file))
 
 
 if __name__ == "__main__":

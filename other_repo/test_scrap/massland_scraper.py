@@ -8,6 +8,7 @@ Search by book and page number, extract metadata information
 import csv
 import time
 import json
+from typing import Dict, List
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait, Select
