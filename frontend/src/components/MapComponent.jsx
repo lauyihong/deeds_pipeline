@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import L from 'leaflet'
 
 // Fix for default markers in Leaflet
@@ -50,9 +50,9 @@ function MapComponent({ deed }) {
         .addTo(map)
     })
 
-    // Add cluster center as red marker
+    // Add cluster center as red marker (using SVG)
     const redMarkerIcon = L.icon({
-      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+      iconUrl: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNSIgaGVpZ2h0PSI0MSIgdmlld0JveD0iMCAwIDI1IDQxIj48cGF0aCBkPSJNMTIuNSAwQzUuNTkzIDAgMCA1LjU5MyAwIDEyLjUgMCAyMC4zOTcgMTIuNSA0MSAxMi41IDQxczEyLjUtMjAuNjAzIDEyLjUtMjguNUMyNSA1LjU5MyAxOS40MDcgMCAyMi41IDB6IiBmaWxsPSIjZWY0NDQ0Ii8+PC9zdmc+',
       shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
       iconSize: [25, 41],
       iconAnchor: [12, 41],
