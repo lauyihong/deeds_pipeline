@@ -72,6 +72,7 @@ def extract_book_page_from_deed(deed_record: Dict) -> List[Tuple[str, str]]:
     1. Direct fields: deed_record["book"] and deed_record["page"]
     2. book_page_pairs list: [{"book": "57", "page": "21"}, ...]
     3. book_page_urls list: Extract from URL query parameters
+    4. OCR results: Extract plan_book/plan_pages from step2 extracted_info
 
     Returns: List of (book, page) tuples
     """
@@ -96,6 +97,21 @@ def extract_book_page_from_deed(deed_record: Dict) -> List[Tuple[str, str]]:
     if urls:
         url_pairs = extract_book_page_from_urls(urls)
         pairs.extend(url_pairs)
+    
+    # Format 4: Extract from OCR results (plan_book/plan_pages from step2)
+    ocr_results = deed_record.get("ocr_results", [])
+    for ocr_result in ocr_results:
+        extracted_info = ocr_result.get("extracted_info", {})
+        if extracted_info:
+            plan_book = extracted_info.get("plan_book")
+            plan_pages = extracted_info.get("plan_pages")
+            if plan_book and plan_pages:
+                # Handle both list and single value cases
+                books = plan_book if isinstance(plan_book, list) else [plan_book]
+                pages = plan_pages if isinstance(plan_pages, list) else [plan_pages]
+                for book in books:
+                    for page_num in pages:
+                        pairs.append((str(book), str(page_num)))
 
     # Dedupe and sort
     return sorted(set(pairs))
