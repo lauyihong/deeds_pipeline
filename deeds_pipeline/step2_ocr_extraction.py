@@ -9,7 +9,7 @@ import requests
 import torch
 import os
 from dotenv import load_dotenv
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 from pathlib import Path
 import google.generativeai as genai
 from transformers import AutoTokenizer, AutoModelForCausalLM
@@ -341,42 +341,126 @@ def process_deed_images(deed_record: Dict) -> Dict:
     return deed_record
 
 
-def run_step2(input_file: Path = STEP1_OUTPUT, output_file: Path = STEP2_OUTPUT) -> Dict[str, Dict]: 
+def process_deeds_ocr(deed_data: Dict[str, Dict]) -> Dict[str, Dict]:
+    """
+    FUNCTION-BASED INTERFACE for notebook integration.
+    Process deed records with OCR and information extraction.
+
+    Args:
+        deed_data: Dictionary of deed records indexed by deed_id
+            Format: {deed_id: {deed_record}, ...}
+            Each deed_record must have 'image_urls' field
+
+    Returns:
+        Same dictionary with each record augmented with:
+            - ocr_text: Extracted text from images
+            - covenant_result: Restrictive covenant detection
+            - deed_info: Structured information (grantors, grantees, etc.)
+            - step2_completed: True
+    """
+    logger.info(f"Starting Step 2 processing for {len(deed_data)} deed(s)")
+
+    processed_data = {}
+    total = len(deed_data)
+
+    for idx, (deed_id, deed_record) in enumerate(deed_data.items(), 1):
+        logger.info(f"Processing deed {deed_id} ({idx}/{total})")
+        try:
+            processed_data[deed_id] = process_deed_images(deed_record)
+        except Exception as e:
+            logger.error(f"Error processing deed {deed_id}: {e}", exc_info=True)
+            # Keep original record with error flag
+            deed_record["step2_error"] = str(e)
+            deed_record["step2_completed"] = False
+            processed_data[deed_id] = deed_record
+
+    logger.info(f"Step 2 completed for {len(processed_data)} deed(s)")
+    return processed_data
+
+
+def run_step2(
+    input_data: Optional[Union[Path, Dict[str, Dict]]] = None,
+    output_file: Optional[Path] = None
+) -> Dict[str, Dict]:
     """
     Run Step 2: OCR and information extraction
-    
+
+    Supports two modes:
+    1. File mode: input_data is a Path, reads from JSON file
+    2. Function mode: input_data is a Dict, processes directly
+
     Args:
-        input_file: Path to Step 1 output file
-        output_file: Path to Step 2 output file
-    
+        input_data: Either:
+            - Path to Step 1 output JSON file (default: STEP1_OUTPUT)
+            - Dict of deed records indexed by deed_id
+            - None (uses default STEP1_OUTPUT)
+        output_file: Path to save output JSON (optional, only used in file mode)
+            - If None and input_data is Path: uses STEP2_OUTPUT
+            - If None and input_data is Dict: does not save to file
+
     Returns:
-        Deed data with OCR and extraction results
+        Deed data with OCR and extraction results (dict indexed by deed_id)
+
+    Examples:
+        # File mode (legacy/CLI)
+        result = run_step2()  # Uses default paths
+        result = run_step2(Path("input.json"), Path("output.json"))
+
+        # Function mode (notebook)
+        deed_data = {"deed_1": {"image_urls": [...]}, ...}
+        result = run_step2(deed_data)  # No file I/O
+        result = run_step2(deed_data, Path("output.json"))  # Save to file
     """
-    logger.info(f"Starting Step 2: OCR and Information Extraction")
-    logger.info(f"Input file: {input_file}")
-    logger.info(f"Output file: {output_file}")
-    
+    # Determine mode and set defaults
+    if input_data is None:
+        # Default file mode
+        input_data = STEP1_OUTPUT
+        if output_file is None:
+            output_file = STEP2_OUTPUT
+
+    # File mode: load from JSON
+    if isinstance(input_data, (Path, str)):
+        input_file = Path(input_data)
+        logger.info(f"Starting Step 2: OCR and Information Extraction (file mode)")
+        logger.info(f"Input file: {input_file}")
+
+        try:
+            logger.info("Loading Step 1 output...")
+            deed_data = load_json(input_file)
+            logger.info(f"Loaded {len(deed_data)} deed records")
+        except Exception as e:
+            logger.error(f"Error loading input file: {e}", exc_info=True)
+            raise
+
+        # Set default output file if not specified
+        if output_file is None:
+            output_file = STEP2_OUTPUT
+
+    # Function mode: use input dict directly
+    elif isinstance(input_data, dict):
+        logger.info(f"Starting Step 2: OCR and Information Extraction (function mode)")
+        deed_data = input_data
+        logger.info(f"Processing {len(deed_data)} deed records")
+
+    else:
+        raise TypeError(
+            f"input_data must be Path, str, dict, or None, got {type(input_data)}"
+        )
+
+    # Process deeds
     try:
-        # Load input data
-        logger.info("Loading Step 1 output...")
-        deed_data = load_json(input_file)
-        logger.info(f"Loaded {len(deed_data)} deed records")
-        
-        # Process each deed
-        processed_data = {}
-        total = len(deed_data)
-        
-        for idx, (deed_id, deed_record) in enumerate(deed_data.items(), 1):
-            logger.info(f"Processing deed {deed_id} ({idx}/{total})")
-            processed_data[deed_id] = process_deed_images(deed_record)
-        
-        # Save output
-        logger.info("Saving processed data...")
-        save_json(processed_data, output_file)
-        logger.info(f"Step 2 completed. Output saved to {output_file}")
-        
+        processed_data = process_deeds_ocr(deed_data)
+
+        # Save to file if output_file is specified
+        if output_file is not None:
+            logger.info(f"Saving processed data to {output_file}...")
+            save_json(processed_data, output_file)
+            logger.info(f"Step 2 completed. Output saved to {output_file}")
+        else:
+            logger.info(f"Step 2 completed (no file output)")
+
         return processed_data
-        
+
     except Exception as e:
         logger.error(f"Error in Step 2: {e}", exc_info=True)
         raise
