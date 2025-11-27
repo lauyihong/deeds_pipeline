@@ -1,0 +1,72 @@
+{
+  "metadata": {
+    "total_deeds": 2,
+    "quality_report": {
+      "total_deeds": 2,
+      "step2_ocr_completed": 0,
+      "step2_completion_rate": "0.0%",
+      "step3_scraper_completed": 2,
+      "step3_completion_rate": "100.0%",
+      "step4_geolocation_completed": 2,
+      "step4_completion_rate": "100.0%",
+      "original_covenant_count": 0,
+      "ocr_detected_covenant_count": 0,
+      "geocoded_count": 0,
+      "geocoded_rate": "0.0%",
+      "with_streets_count": 0,
+      "with_streets_rate": "0.0%"
+    }
+  },
+  "deeds": {
+    "5767": {
+      "deed_id": "5767",
+      "county": "Middlesex County",
+      "town": "Dracut",
+      "book_page_pairs": [
+        {
+          "book": "57",
+          "page": "21"
+        }
+      ],
+      "scraper_results": [
+        {
+          "book": "57",
+          "page": "21",
+          "metadata": {
+            "error": "Message: \nStacktrace:\n0   chromedriver                        0x00000001033fbaa4 cxxbridge1$str$ptr + 2943380\n1   chromedriver                        0x00000001033f3760 cxxbridge1$str$ptr + 2909776\n2   chromedriver                        0x0000000102f0a2bc _RNvCsgXDX2mvAJAg_7___rustc35___rust_no_alloc_shim_is_unstable_v2 + 74028\n3   chromedriver                        0x0000000102f518ac _RNvCsgXDX2mvAJAg_7___rustc35___rust_no_alloc_shim_is_unstable_v2 + 366364\n4   chromedriver                        0x0000000102f92d78 _RNvCsgXDX2mvAJAg_7___rustc35___rust_no_alloc_shim_is_unstable_v2 + 633832\n5   chromedriver                        0x0000000102f45f10 _RNvCsgXDX2mvAJAg_7___rustc35___rust_no_alloc_shim_is_unstable_v2 + 318848\n6   chromedriver                        0x00000001033bdb98 cxxbridge1$str$ptr + 2689672\n7   chromedriver                        0x00000001033c13ac cxxbridge1$str$ptr + 2704028\n8   chromedriver                        0x000000010339ea08 cxxbridge1$str$ptr + 2562296\n9   chromedriver                        0x00000001033c1c84 cxxbridge1$str$ptr + 2706292\n10  chromedriver                        0x0000000103390304 cxxbridge1$str$ptr + 2503156\n11  chromedriver                        0x00000001033e1d58 cxxbridge1$str$ptr + 2837576\n12  chromedriver                        0x00000001033e1edc cxxbridge1$str$ptr + 2837964\n13  chromedriver                        0x00000001033f33b0 cxxbridge1$str$ptr + 2908832\n14  libsystem_pthread.dylib             0x000000019a381f94 _pthread_start + 136\n15  libsystem_pthread.dylib             0x000000019a37cd34 thread_start + 8\n"
+          },
+          "status": "error"
+        }
+      ],
+      "extracted_streets": [],
+      "step3_completed": true,
+      "geolocation": null,
+      "step4_completed": true
+    },
+    "6188": {
+      "deed_id": "6188",
+      "county": "Middlesex County",
+      "town": "Dracut",
+      "book_page_pairs": [
+        {
+          "book": "51",
+          "page": "27"
+        }
+      ],
+      "scraper_results": [
+        {
+          "book": "51",
+          "page": "27",
+          "metadata": {
+            "error": "'NoneType' object has no attribute 'is_displayed'"
+          },
+          "status": "error"
+        }
+      ],
+      "extracted_streets": [],
+      "step3_completed": true,
+      "geolocation": null,
+      "step4_completed": true
+    }
+  }
+}

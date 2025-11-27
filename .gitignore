@@ -1,5 +1,6 @@
 # Python
 __pycache__/
+*.__pycache__/
 *.py[cod]
 *$py.class
 *.so
@@ -35,3 +36,4 @@ Thumbs.db
 .ipynb_checkpoints/
 
 WARP.md
+data/gen-lang-client-0299712015-e4edfcee773f.json
