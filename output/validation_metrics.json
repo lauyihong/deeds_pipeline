@@ -1,0 +1,10 @@
+{
+  "total_validation_deeds": 111,
+  "deeds_in_pipeline": 102,
+  "deeds_pending": 9,
+  "location_radius_match_rate": 80.39,
+  "street_name_match_rate": 56.86,
+  "city_town_match_rate": 52.94,
+  "average_string_similarity": 25.95,
+  "average_overall_match_rate": 63.41
+}
