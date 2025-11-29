@@ -14,9 +14,9 @@
       "rate": 62.75
     },
     "has_geolocation": {
-      "count": 82,
+      "count": 72,
       "total": 102,
-      "rate": 80.39
+      "rate": 70.59
     },
     "in_radius": {
       "count": 70,

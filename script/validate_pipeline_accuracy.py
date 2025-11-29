@@ -158,6 +158,9 @@ def check_street_match(scraped_streets_str, manual_street):
 def check_has_geolocation(lat, lon):
     """Binary: Does pipeline have valid lat/lon? (1 or 0)"""
     if pd.notna(lat) and pd.notna(lon):
+        # Reject 0.0, 0.0 (Null Island) - indicates failed geocoding
+        if abs(lat) < 0.001 and abs(lon) < 0.001:
+            return 0
         return 1
     return 0
 
