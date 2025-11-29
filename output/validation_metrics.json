@@ -1,10 +1,31 @@
 {
   "total_validation_deeds": 111,
   "deeds_in_pipeline": 102,
-  "deeds_pending": 9,
-  "location_radius_match_rate": 80.39,
-  "street_name_match_rate": 56.86,
-  "city_town_match_rate": 52.94,
-  "average_string_similarity": 25.95,
-  "average_overall_match_rate": 63.41
+  "deeds_not_in_pipeline": 9,
+  "metrics": {
+    "town_match": {
+      "count": 71,
+      "total": 102,
+      "rate": 69.61
+    },
+    "street_match": {
+      "count": 64,
+      "total": 102,
+      "rate": 62.75
+    },
+    "has_geolocation": {
+      "count": 82,
+      "total": 102,
+      "rate": 80.39
+    },
+    "in_radius": {
+      "count": 70,
+      "total": 102,
+      "rate": 68.63
+    }
+  },
+  "overall": {
+    "all_match_count": 58,
+    "all_match_rate": 56.86
+  }
 }
