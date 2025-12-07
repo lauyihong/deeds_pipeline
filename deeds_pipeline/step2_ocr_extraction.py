@@ -77,6 +77,55 @@ def _load_mistral_model():
     return _tokenizer, _model
 
 
+def extract_plan_references_regex(text: str) -> Dict[str, Optional[List[str]]]:
+    """
+    Regex fallback for extracting plan book/page when LLM fails.
+
+    Args:
+        text: OCR extracted text
+
+    Returns:
+        Dictionary with plan_book and plan_pages lists (or None if not found)
+    """
+    books = []
+    pages = []
+
+    # Patterns for plan book extraction
+    book_patterns = [
+        r'[Bb]ook\s+(?:of\s+)?[Pp]lans?\s+(\d+)',      # "Book of Plans 57", "Book of Plan 57"
+        r'[Pp]lan\s+[Bb]ook\s+(\d+)',                   # "Plan Book 57"
+        r'[Pp]lans?,?\s+[Bb]ook\s+(\d+)',               # "Plans, Book 57"
+        r'recorded\s+.*?[Bb]ook\s+(\d+)',               # "recorded in Book 57"
+    ]
+
+    # Patterns for plan page extraction
+    page_patterns = [
+        r'[Pp]lan\s+(\d+[A-Z]?)',                       # "Plan 67", "Plan 67A"
+        r'[Pp]age\s+(\d+[A-Z]?)',                       # "Page 67", "Page 67A"
+        r'[Pp]lans?\s+\d+,?\s+[Pp](?:lan|age)\s+(\d+[A-Z]?)',  # "Plans 57, Plan 67"
+        r'[Bb]ook\s+\d+,?\s+[Pp](?:lan|age)\s+(\d+[A-Z]?)',    # "Book 57, Page 67"
+    ]
+
+    for pattern in book_patterns:
+        matches = re.findall(pattern, text, re.IGNORECASE)
+        books.extend(matches)
+
+    for pattern in page_patterns:
+        matches = re.findall(pattern, text, re.IGNORECASE)
+        pages.extend(matches)
+
+    # Deduplicate while preserving order
+    books = list(dict.fromkeys(books)) if books else None
+    pages = list(dict.fromkeys(pages)) if pages else None
+
+    if books or pages:
+        logger.debug(f"Regex fallback found: books={books}, pages={pages}")
+
+    return {
+        "plan_book": books,
+        "plan_pages": pages
+    }
+
 
 def extract_text_with_google_vision(image_url: str) -> Optional[str]:
     """
@@ -322,7 +371,17 @@ def process_deed_images(deed_record: Dict) -> Dict:
 
         # Extract structured information
         deed_info = extract_deed_info_with_gemini(ocr_text)
-        
+
+        # Apply regex fallback if Gemini didn't find plan_book or plan_pages
+        if not deed_info.get("plan_book") or not deed_info.get("plan_pages"):
+            regex_result = extract_plan_references_regex(ocr_text)
+            if regex_result.get("plan_book") and not deed_info.get("plan_book"):
+                deed_info["plan_book"] = regex_result["plan_book"]
+                logger.info(f"Deed {deed_id}: Regex fallback found plan_book: {regex_result['plan_book']}")
+            if regex_result.get("plan_pages") and not deed_info.get("plan_pages"):
+                deed_info["plan_pages"] = regex_result["plan_pages"]
+                logger.info(f"Deed {deed_id}: Regex fallback found plan_pages: {regex_result['plan_pages']}")
+
         ocr_results.append({
             "image_url": url,
             "ocr_text": ocr_text,

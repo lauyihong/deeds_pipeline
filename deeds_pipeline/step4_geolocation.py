@@ -58,9 +58,9 @@ class ClusterResult:
     validated_streets: List[ValidatedStreet]
     invalid_streets: List[str]
     primary_town: str
-    cluster_center_lat: float
-    cluster_center_lon: float
-    cluster_radius_miles: float
+    cluster_center_lat: Optional[float]  # None when geocoding fails (not 0.0)
+    cluster_center_lon: Optional[float]  # None when geocoding fails (not 0.0)
+    cluster_radius_miles: Optional[float]  # None when geocoding fails
     final_address: Optional[str]
     confidence: float
     geocoding_stats: Dict
@@ -99,9 +99,9 @@ class StreetClusteringValidator:
                 validated_streets=[],
                 invalid_streets=streets,
                 primary_town="UNKNOWN",
-                cluster_center_lat=0.0,
-                cluster_center_lon=0.0,
-                cluster_radius_miles=0.0,
+                cluster_center_lat=None,  # None instead of 0.0 for failed geocoding
+                cluster_center_lon=None,
+                cluster_radius_miles=None,
                 final_address=None,
                 confidence=0.0,
                 geocoding_stats={
@@ -134,9 +134,9 @@ class StreetClusteringValidator:
                 validated_streets=[],
                 invalid_streets=streets,
                 primary_town=primary_town,
-                cluster_center_lat=0.0,
-                cluster_center_lon=0.0,
-                cluster_radius_miles=0.0,
+                cluster_center_lat=None,  # None instead of 0.0 for failed geocoding
+                cluster_center_lon=None,
+                cluster_radius_miles=None,
                 final_address=None,
                 confidence=0.0,
                 geocoding_stats={

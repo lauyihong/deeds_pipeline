@@ -1,31 +1,31 @@
 {
   "total_validation_deeds": 111,
-  "deeds_in_pipeline": 102,
-  "deeds_not_in_pipeline": 9,
+  "deeds_in_pipeline": 104,
+  "deeds_not_in_pipeline": 7,
   "metrics": {
     "town_match": {
       "count": 71,
-      "total": 102,
-      "rate": 69.61
+      "total": 104,
+      "rate": 68.27
     },
     "street_match": {
-      "count": 64,
-      "total": 102,
-      "rate": 62.75
+      "count": 60,
+      "total": 104,
+      "rate": 57.69
     },
     "has_geolocation": {
       "count": 72,
-      "total": 102,
-      "rate": 70.59
+      "total": 104,
+      "rate": 69.23
     },
     "in_radius": {
-      "count": 70,
-      "total": 102,
-      "rate": 68.63
+      "count": 71,
+      "total": 104,
+      "rate": 68.27
     }
   },
   "overall": {
-    "all_match_count": 58,
-    "all_match_rate": 56.86
+    "all_match_count": 60,
+    "all_match_rate": 57.69
   }
 }
