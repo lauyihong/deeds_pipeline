@@ -169,13 +169,37 @@ def process_single_deed(deed_record: Dict, use_cache: bool = True, headless: boo
         all_streets: List[str] = []
         town_from_results: Optional[str] = deed_record.get("town") or None
 
+        # Get expected town from deed record for validation
+        expected_town = deed_record.get("city") or deed_record.get("town")
+        if expected_town:
+            expected_town = expected_town.upper().strip()
+
         for book, page in book_pages:
             logger.debug(f"  Scraping book={book}, page={page}")
             try:
                 result = scraper.process_record(book, page)
+
+                # Validate scraped plan's town matches deed's expected town
+                scraped_town = result.get("metadata", {}).get("search_result_info", {}).get("town", "")
+                if scraped_town:
+                    scraped_town_upper = scraped_town.upper().strip()
+                else:
+                    scraped_town_upper = ""
+
+                # If we have expected town and scraped town, check they match
+                if expected_town and scraped_town_upper and scraped_town_upper != expected_town:
+                    logger.warning(f"  Skipping book={book}, page={page}: town mismatch "
+                                   f"(scraped={scraped_town}, expected={expected_town})")
+                    # Still record the result but don't extract streets from it
+                    result["town_mismatch"] = True
+                    result["expected_town"] = expected_town
+                    result["scraped_town"] = scraped_town
+                    scraper_results.append(result)
+                    continue  # Skip extracting streets from this mismatched plan
+
                 scraper_results.append(result)
 
-                # Extract streets
+                # Extract streets only from matching plans
                 streets = extract_streets_from_scraper_result(result)
                 all_streets.extend(streets)
 

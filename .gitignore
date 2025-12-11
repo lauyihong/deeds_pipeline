@@ -1,5 +1,6 @@
 # Python
 __pycache__/
+*.__pycache__/
 *.py[cod]
 *$py.class
 *.so
@@ -25,6 +26,8 @@ logs/
 
 # OS
 .DS_Store
+*.DS_Store
+
 Thumbs.db
 
 # Data (large files)

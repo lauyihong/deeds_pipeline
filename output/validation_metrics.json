@@ -1,0 +1,31 @@
+{
+  "total_validation_deeds": 111,
+  "deeds_in_pipeline": 111,
+  "deeds_not_in_pipeline": 0,
+  "metrics": {
+    "town_match": {
+      "count": 85,
+      "total": 111,
+      "rate": 76.58
+    },
+    "street_match": {
+      "count": 72,
+      "total": 111,
+      "rate": 64.86
+    },
+    "has_geolocation": {
+      "count": 86,
+      "total": 111,
+      "rate": 77.48
+    },
+    "in_radius": {
+      "count": 85,
+      "total": 111,
+      "rate": 76.58
+    }
+  },
+  "overall": {
+    "all_match_count": 72,
+    "all_match_rate": 64.86
+  }
+}
